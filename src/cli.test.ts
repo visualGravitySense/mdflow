@@ -66,23 +66,29 @@ describe("parseCliArgs", () => {
 });
 
 describe("mergeFrontmatter", () => {
-  test("returns frontmatter when no overrides", () => {
-    const frontmatter: CopilotFrontmatter = { model: "claude-haiku-4.5", silent: true };
+  test("applies silent: true as default", () => {
+    const frontmatter: CopilotFrontmatter = { model: "claude-haiku-4.5" };
     const result = mergeFrontmatter(frontmatter, {});
-    expect(result).toEqual(frontmatter);
+    expect(result.model).toBe("claude-haiku-4.5");
+    expect(result.silent).toBe(true);
+  });
+
+  test("frontmatter can override default silent", () => {
+    const frontmatter: CopilotFrontmatter = { model: "claude-haiku-4.5", silent: false };
+    const result = mergeFrontmatter(frontmatter, {});
+    expect(result.silent).toBe(false);
   });
 
   test("overrides model", () => {
-    const frontmatter: CopilotFrontmatter = { model: "claude-haiku-4.5", silent: true };
+    const frontmatter: CopilotFrontmatter = { model: "claude-haiku-4.5" };
     const result = mergeFrontmatter(frontmatter, { model: "gpt-5" });
     expect(result.model).toBe("gpt-5");
     expect(result.silent).toBe(true);
   });
 
-  test("overrides silent", () => {
+  test("CLI overrides silent from frontmatter", () => {
     const frontmatter: CopilotFrontmatter = { model: "claude-haiku-4.5", silent: true };
     const result = mergeFrontmatter(frontmatter, { silent: false });
-    expect(result.model).toBe("claude-haiku-4.5");
     expect(result.silent).toBe(false);
   });
 

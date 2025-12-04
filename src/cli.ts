@@ -95,12 +95,16 @@ export function parseCliArgs(argv: string[]): CliArgs {
 
 /**
  * Merge frontmatter with CLI overrides (CLI wins)
+ * Applies defaults for unset values
  */
 export function mergeFrontmatter(
   frontmatter: CopilotFrontmatter,
   overrides: Partial<CopilotFrontmatter>
 ): CopilotFrontmatter {
-  return { ...frontmatter, ...overrides };
+  const defaults: Partial<CopilotFrontmatter> = {
+    silent: true,
+  };
+  return { ...defaults, ...frontmatter, ...overrides };
 }
 
 function printHelp() {
