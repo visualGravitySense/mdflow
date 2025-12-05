@@ -1,4 +1,14 @@
+/** Input field definition for wizard mode */
+export interface InputField {
+  name: string;
+  type: "text" | "confirm" | "select" | "password";
+  message: string;
+  default?: string | boolean;
+  choices?: string[];  // For select type
+}
+
 export interface CopilotFrontmatter {
+  inputs?: InputField[];
   before?: string | string[];
   after?: string | string[];
   model?:

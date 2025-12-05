@@ -131,3 +131,80 @@ rest of content`;
     expect(stripShebang("#!/usr/local/bin/md-agent\nrest")).toBe("rest");
   });
 });
+
+describe("parseFrontmatter inputs (wizard mode)", () => {
+  test("parses inputs array with objects", () => {
+    const content = `---
+inputs:
+  - name: branch
+    type: text
+    message: Which branch?
+  - name: force
+    type: confirm
+    message: Force push?
+model: gpt-5
+---
+Body`;
+    const result = parseFrontmatter(content);
+    expect(result.frontmatter.inputs).toHaveLength(2);
+    expect(result.frontmatter.inputs![0]).toEqual({
+      name: "branch",
+      type: "text",
+      message: "Which branch?",
+    });
+    expect(result.frontmatter.inputs![1]).toEqual({
+      name: "force",
+      type: "confirm",
+      message: "Force push?",
+    });
+    expect(result.frontmatter.model).toBe("gpt-5");
+  });
+
+  test("parses select input with choices array", () => {
+    const content = `---
+inputs:
+  - name: env
+    type: select
+    message: Which environment?
+    choices:
+      - dev
+      - staging
+      - prod
+---
+Body`;
+    const result = parseFrontmatter(content);
+    expect(result.frontmatter.inputs).toHaveLength(1);
+    expect(result.frontmatter.inputs![0]).toEqual({
+      name: "env",
+      type: "select",
+      message: "Which environment?",
+      choices: ["dev", "staging", "prod"],
+    });
+  });
+
+  test("parses input with default value", () => {
+    const content = `---
+inputs:
+  - name: branch
+    type: text
+    message: Branch name?
+    default: main
+---
+Body`;
+    const result = parseFrontmatter(content);
+    expect(result.frontmatter.inputs![0]!.default).toBe("main");
+  });
+
+  test("parses input with boolean default", () => {
+    const content = `---
+inputs:
+  - name: force
+    type: confirm
+    message: Force?
+    default: false
+---
+Body`;
+    const result = parseFrontmatter(content);
+    expect(result.frontmatter.inputs![0]!.default).toBe(false);
+  });
+});

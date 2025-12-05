@@ -1,6 +1,7 @@
 ---
 model: claude-haiku-4.5
 silent: true
+allow-tool: write
 ---
 
 # Copilot Prompt Agents
@@ -42,3 +43,6 @@ silent: true
 
 Analyze the CI output above and summarize any failures.
 ```
+
+
+Fix the current README.md based on the codebase

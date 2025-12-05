@@ -3,6 +3,8 @@ import { parseFrontmatter } from "./parse";
 import { parseCliArgs, mergeFrontmatter } from "./cli";
 import { runBeforeCommands, runAfterCommands, buildCopilotArgs, buildPrompt, runCopilot, slugify } from "./run";
 import { substituteTemplateVars, extractTemplateVars } from "./template";
+import { promptInputs, validateInputField } from "./inputs";
+import type { InputField } from "./types";
 
 /**
  * Read stdin if it's being piped (not a TTY)
@@ -44,9 +46,33 @@ async function main() {
   const content = await file.text();
   const { frontmatter: baseFrontmatter, body: rawBody } = parseFrontmatter(content);
 
-  // Check for missing template variables
+  // Handle wizard mode inputs
+  let allTemplateVars = { ...templateVars };
+  if (baseFrontmatter.inputs && Array.isArray(baseFrontmatter.inputs)) {
+    // Validate input fields
+    const validatedInputs: InputField[] = [];
+    for (let i = 0; i < baseFrontmatter.inputs.length; i++) {
+      try {
+        const validated = validateInputField(baseFrontmatter.inputs[i], i);
+        validatedInputs.push(validated);
+      } catch (err) {
+        console.error(`Invalid input definition: ${(err as Error).message}`);
+        process.exit(1);
+      }
+    }
+
+    // Prompt for inputs (skips those provided via CLI)
+    try {
+      allTemplateVars = await promptInputs(validatedInputs, templateVars);
+    } catch (err) {
+      // User cancelled (Ctrl+C)
+      process.exit(130);
+    }
+  }
+
+  // Check for missing template variables (after prompts)
   const requiredVars = extractTemplateVars(rawBody);
-  const missingVars = requiredVars.filter(v => !(v in templateVars));
+  const missingVars = requiredVars.filter(v => !(v in allTemplateVars));
   if (missingVars.length > 0) {
     console.error(`Missing template variables: ${missingVars.join(", ")}`);
     console.error(`Use --${missingVars[0]} <value> to provide values`);
@@ -54,7 +80,7 @@ async function main() {
   }
 
   // Apply template substitution to body
-  const body = substituteTemplateVars(rawBody, templateVars);
+  const body = substituteTemplateVars(rawBody, allTemplateVars);
 
   // Merge frontmatter with CLI overrides
   const frontmatter = mergeFrontmatter(baseFrontmatter, overrides);
