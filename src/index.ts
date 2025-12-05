@@ -5,6 +5,7 @@ import { runBeforeCommands, runAfterCommands, buildCopilotArgs, buildPrompt, run
 import { substituteTemplateVars, extractTemplateVars } from "./template";
 import { promptInputs, validateInputField } from "./inputs";
 import { resolveContextGlobs, formatContextAsXml, getContextStats } from "./context";
+import { extractOutput, isValidExtractMode, type ExtractMode } from "./extract";
 import type { InputField } from "./types";
 import { dirname } from "path";
 
@@ -124,12 +125,25 @@ async function main() {
   const args = buildCopilotArgs(frontmatter);
   const prompt = buildPrompt(beforeResults, finalBody);
 
-  // Capture output if we have after commands to pipe to
+  // Capture output if we have extract mode or after commands
   const hasAfterCommands = frontmatter.after !== undefined;
-  const copilotResult = await runCopilot(args, prompt, hasAfterCommands);
+  const hasExtract = frontmatter.extract && isValidExtractMode(frontmatter.extract);
+  const captureOutput = hasAfterCommands || hasExtract;
+  const copilotResult = await runCopilot(args, prompt, captureOutput);
 
-  // Run after-commands with copilot output piped to first command
-  const afterResults = await runAfterCommands(frontmatter.after, copilotResult.output);
+  // Apply output extraction if specified
+  let outputForPipe = copilotResult.output;
+  if (hasExtract && copilotResult.output) {
+    outputForPipe = extractOutput(copilotResult.output, frontmatter.extract as ExtractMode);
+    // Print extracted output (different from full output already shown by runCopilot)
+    if (outputForPipe !== copilotResult.output) {
+      console.log("\n--- Extracted output ---");
+      console.log(outputForPipe);
+    }
+  }
+
+  // Run after-commands with (possibly extracted) output piped to first command
+  const afterResults = await runAfterCommands(frontmatter.after, outputForPipe);
 
   // Exit with copilot's exit code (or first failed after command)
   const failedAfter = afterResults.find(r => r.exitCode !== 0);

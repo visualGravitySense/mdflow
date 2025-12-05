@@ -10,6 +10,7 @@ export interface InputField {
 export interface CopilotFrontmatter {
   inputs?: InputField[];
   context?: string | string[];  // Glob patterns for files to include
+  extract?: "json" | "code" | "markdown" | "raw";  // Output extraction mode
   before?: string | string[];
   after?: string | string[];
   model?:
