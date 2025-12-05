@@ -1,5 +1,5 @@
 import { expect, test, describe } from "bun:test";
-import { parseFrontmatter } from "./parse";
+import { parseFrontmatter, stripShebang } from "./parse";
 
 describe("parseFrontmatter", () => {
   test("returns empty frontmatter when no frontmatter present", () => {
@@ -91,5 +91,43 @@ Line 2
 Line 3`;
     const result = parseFrontmatter(content);
     expect(result.body).toBe("Line 1\n\nLine 2\n\nLine 3");
+  });
+
+  test("strips shebang line before parsing", () => {
+    const content = `#!/usr/bin/env md-agent
+---
+model: gpt-5
+---
+Body content`;
+    const result = parseFrontmatter(content);
+    expect(result.frontmatter.model).toBe("gpt-5");
+    expect(result.body).toBe("Body content");
+  });
+
+  test("handles shebang without frontmatter", () => {
+    const content = `#!/usr/bin/env md-agent
+Just some content`;
+    const result = parseFrontmatter(content);
+    expect(result.frontmatter).toEqual({});
+    expect(result.body).toBe("Just some content");
+  });
+});
+
+describe("stripShebang", () => {
+  test("removes shebang line", () => {
+    const content = `#!/usr/bin/env md-agent
+rest of content`;
+    expect(stripShebang(content)).toBe("rest of content");
+  });
+
+  test("preserves content without shebang", () => {
+    const content = "no shebang here";
+    expect(stripShebang(content)).toBe("no shebang here");
+  });
+
+  test("handles various shebang formats", () => {
+    expect(stripShebang("#!/bin/bash\nrest")).toBe("rest");
+    expect(stripShebang("#! /usr/bin/env node\nrest")).toBe("rest");
+    expect(stripShebang("#!/usr/local/bin/md-agent\nrest")).toBe("rest");
   });
 });

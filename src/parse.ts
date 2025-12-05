@@ -1,13 +1,28 @@
 import type { CopilotFrontmatter, ParsedMarkdown } from "./types";
 
 /**
+ * Strip shebang line from content if present
+ * Allows markdown files to be executable with #!/usr/bin/env md-agent
+ */
+export function stripShebang(content: string): string {
+  const lines = content.split("\n");
+  if (lines[0]?.startsWith("#!")) {
+    return lines.slice(1).join("\n");
+  }
+  return content;
+}
+
+/**
  * Parse YAML frontmatter from markdown content
+ * Automatically strips shebang line if present
  */
 export function parseFrontmatter(content: string): ParsedMarkdown {
-  const lines = content.split("\n");
+  // Strip shebang first
+  const strippedContent = stripShebang(content);
+  const lines = strippedContent.split("\n");
 
   if (lines[0]?.trim() !== "---") {
-    return { frontmatter: {}, body: content };
+    return { frontmatter: {}, body: strippedContent };
   }
 
   let endIndex = -1;
