@@ -1,8 +1,6 @@
 ---
 runner: codex
-allow-all-tools: true
-codex:
-  cd: ./src
+silent: true
 ---
 
-Refactor the authentication middleware to use async/await instead of callbacks.
+Say "Hello from Codex!" and nothing else.

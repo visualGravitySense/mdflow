@@ -11,6 +11,8 @@ describe("parseCliArgs", () => {
     expect(result.templateVars).toEqual({});
     expect(result.noCache).toBe(false);
     expect(result.dryRun).toBe(false);
+    expect(result.check).toBe(false);
+    expect(result.json).toBe(false);
   });
 
   test("extracts positional text after file path", () => {
@@ -153,6 +155,69 @@ describe("parseCliArgs", () => {
   test("parses --agent into copilot config", () => {
     const result = parseCliArgs(["node", "script", "DEMO.md", "--agent", "my-agent"]);
     expect(result.overrides.copilot).toEqual({ agent: "my-agent" });
+  });
+
+  test("parses --verbose flag", () => {
+    const result = parseCliArgs(["node", "script", "DEMO.md", "--verbose"]);
+    expect(result.verbose).toBe(true);
+  });
+
+  test("parses -v short flag", () => {
+    const result = parseCliArgs(["node", "script", "DEMO.md", "-v"]);
+    expect(result.verbose).toBe(true);
+  });
+
+  test("verbose defaults to false", () => {
+    const result = parseCliArgs(["node", "script", "DEMO.md"]);
+    expect(result.verbose).toBe(false);
+  });
+
+  test("parses --check flag", () => {
+    const result = parseCliArgs(["node", "script", "DEMO.md", "--check"]);
+    expect(result.check).toBe(true);
+  });
+
+  test("parses --json flag", () => {
+    const result = parseCliArgs(["node", "script", "DEMO.md", "--json"]);
+    expect(result.json).toBe(true);
+  });
+
+  test("parses --check and --json together", () => {
+    const result = parseCliArgs(["node", "script", "DEMO.md", "--check", "--json"]);
+    expect(result.check).toBe(true);
+    expect(result.json).toBe(true);
+  });
+
+  test("check and json default to false", () => {
+    const result = parseCliArgs(["node", "script", "DEMO.md"]);
+    expect(result.check).toBe(false);
+    expect(result.json).toBe(false);
+  });
+
+  test("parses --run-batch flag", () => {
+    const result = parseCliArgs(["node", "script", "--run-batch"]);
+    expect(result.runBatch).toBe(true);
+  });
+
+  test("runBatch defaults to false", () => {
+    const result = parseCliArgs(["node", "script", "DEMO.md"]);
+    expect(result.runBatch).toBe(false);
+  });
+
+  test("parses --concurrency flag", () => {
+    const result = parseCliArgs(["node", "script", "--run-batch", "--concurrency", "8"]);
+    expect(result.runBatch).toBe(true);
+    expect(result.concurrency).toBe(8);
+  });
+
+  test("concurrency defaults to undefined", () => {
+    const result = parseCliArgs(["node", "script", "--run-batch"]);
+    expect(result.concurrency).toBeUndefined();
+  });
+
+  test("ignores invalid concurrency value", () => {
+    const result = parseCliArgs(["node", "script", "--run-batch", "--concurrency", "invalid"]);
+    expect(result.concurrency).toBeUndefined();
   });
 });
 

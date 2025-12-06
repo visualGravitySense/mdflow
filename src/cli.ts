@@ -14,6 +14,9 @@ export interface CliArgs {
   passthroughArgs: string[];
   check: boolean;
   json: boolean;
+  runBatch: boolean;
+  concurrency?: number;
+  setup: boolean;
 }
 
 /** Known CLI flags that shouldn't be treated as template variables */
@@ -34,6 +37,9 @@ export const KNOWN_FLAGS = new Set([
   "--runner", "-r",
   "--check",
   "--json",
+  "--run-batch",
+  "--concurrency",
+  "--setup",
   "--",  // Passthrough separator
 ]);
 
@@ -55,6 +61,9 @@ export function parseCliArgs(argv: string[]): CliArgs {
   let inPassthrough = false;
   let check = false;
   let json = false;
+  let runBatch = false;
+  let concurrency: number | undefined;
+  let setup = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -179,6 +188,21 @@ export function parseCliArgs(argv: string[]): CliArgs {
       case "--json":
         json = true;
         break;
+
+      case "--run-batch":
+        runBatch = true;
+        break;
+
+      case "--concurrency":
+        if (nextArg && !isNaN(parseInt(nextArg))) {
+          concurrency = parseInt(nextArg);
+          i++;
+        }
+        break;
+
+      case "--setup":
+        setup = true;
+        break;
     }
   }
 
@@ -197,6 +221,9 @@ export function parseCliArgs(argv: string[]): CliArgs {
     passthroughArgs,
     check,
     json,
+    runBatch,
+    concurrency,
+    setup,
   };
 }
 
@@ -234,6 +261,8 @@ export function mergeFrontmatter(
 function printHelp() {
   console.log(`
 Usage: <file.md> [text] [options] [-- passthrough-args]
+       --run-batch [options] < manifest.json
+       --setup
 
 Arguments:
   text                    Additional text appended to the prompt body
@@ -255,15 +284,34 @@ Options:
   --check                 Validate frontmatter without executing
   --json                  Output validation results as JSON (with --check)
   --verbose, -v           Show debug info (runner, args, etc.)
+  --setup                 Configure shell to run .md files directly
   --help, -h              Show this help
+
+Batch/Swarm Mode:
+  --run-batch             Read JSON manifest from stdin, dispatch parallel agents
+  --concurrency <n>       Max parallel agents (default: 4)
 
 Passthrough:
   --                      Everything after -- is passed to the runner
+
+Setup (treat .md as agents):
+  ma --setup              # Interactive wizard to configure your shell
+                          # After setup: ./TASK.md instead of: ma TASK.md
 
 Validation:
   ma --check task.md                    # Human-readable validation
   ma --check task.md --json             # JSON output for piping
   ma --check task.md --json | ma DOCTOR.md > fixed.md
+
+Batch Mode:
+  ma PLANNER.md | ma --run-batch        # Planner outputs JSON manifest
+  ma --run-batch --concurrency 8 < jobs.json
+
+Batch Manifest Format:
+  [
+    { "agent": "agents/CODER.md", "branch": "feat/api", "vars": { "task": "..." } },
+    { "agent": "agents/CODER.md", "branch": true, "model": "sonnet" }
+  ]
 
 Examples:
   DEMO.md "focus on error handling"

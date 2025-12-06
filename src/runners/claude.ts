@@ -5,6 +5,29 @@
 
 import { BaseRunner, type RunContext, type RunResult, type RunnerName } from "./types";
 
+/** Keys that are explicitly handled and should be skipped in the generic pass-through loop */
+const HANDLED_CLAUDE_KEYS = new Set([
+  "dangerously-skip-permissions",
+  "mcp-config",
+  "allowed-tools"
+]);
+
+/**
+ * Map generic model names to Claude-specific models
+ */
+export function mapClaudeModel(model: string): string {
+  const modelMap: Record<string, string> = {
+    "sonnet": "sonnet",
+    "opus": "opus",
+    "haiku": "haiku",
+    "claude-sonnet-4": "sonnet",
+    "claude-sonnet-4.5": "sonnet",
+    "claude-opus-4.5": "opus",
+    "claude-haiku-4.5": "haiku",
+  };
+  return modelMap[model] || model;
+}
+
 export class ClaudeRunner extends BaseRunner {
   readonly name: RunnerName = "claude";
 
@@ -19,7 +42,7 @@ export class ClaudeRunner extends BaseRunner {
 
     // Model mapping
     if (frontmatter.model) {
-      args.push("--model", this.mapModel(frontmatter.model));
+      args.push("--model", mapClaudeModel(frontmatter.model));
     }
 
     // Directory access
@@ -56,7 +79,7 @@ export class ClaudeRunner extends BaseRunner {
     // Passthrough any claude-specific args from config
     for (const [key, value] of Object.entries(claudeConfig)) {
       // Skip already-handled keys
-      if (["dangerously-skip-permissions", "mcp-config", "allowed-tools"].includes(key)) {
+      if (HANDLED_CLAUDE_KEYS.has(key)) {
         continue;
       }
       // Pass through other keys as flags
@@ -71,21 +94,5 @@ export class ClaudeRunner extends BaseRunner {
     args.push(...ctx.passthroughArgs);
 
     return args;
-  }
-
-  /**
-   * Map generic model names to Claude-specific models
-   */
-  private mapModel(model: string): string {
-    const modelMap: Record<string, string> = {
-      "sonnet": "sonnet",
-      "opus": "opus",
-      "haiku": "haiku",
-      "claude-sonnet-4": "sonnet",
-      "claude-sonnet-4.5": "sonnet",
-      "claude-opus-4.5": "opus",
-      "claude-haiku-4.5": "haiku",
-    };
-    return modelMap[model] || model;
   }
 }

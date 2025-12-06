@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
-import { parseFrontmatter } from "./parse";
+import { parseFrontmatter, parseRawFrontmatter } from "./parse";
 import { parseCliArgs, mergeFrontmatter } from "./cli";
+import { safeParseFrontmatter } from "./schema";
 import { runBeforeCommands, runAfterCommands, buildPrompt, slugify } from "./run";
 import { substituteTemplateVars, extractTemplateVars } from "./template";
 import { promptInputs, validateInputField } from "./inputs";
@@ -11,6 +12,8 @@ import { validatePrerequisites, handlePrerequisiteFailure } from "./prerequisite
 import { formatDryRun, toCommandList, type DryRunInfo } from "./dryrun";
 import { isRemoteUrl, fetchRemote, cleanupRemote, printRemoteWarning } from "./remote";
 import { resolveRunnerSync, type RunContext } from "./runners";
+import { runBatch, formatBatchResults, parseBatchManifest } from "./batch";
+import { runSetup } from "./setup";
 import type { InputField } from "./types";
 import { dirname, resolve } from "path";
 
@@ -32,7 +35,60 @@ async function readStdin(): Promise<string> {
 }
 
 async function main() {
-  const { filePath, overrides, appendText, templateVars, noCache, dryRun, runner: cliRunner, passthroughArgs } = parseCliArgs(process.argv);
+  const { filePath, overrides, appendText, templateVars, noCache, dryRun, verbose, runner: cliRunner, passthroughArgs, check, json, runBatch: runBatchMode, concurrency, setup } = parseCliArgs(process.argv);
+
+  // ---------------------------------------------------------
+  // SETUP MODE
+  // ---------------------------------------------------------
+  if (setup) {
+    await runSetup();
+    process.exit(0);
+  }
+
+  // ---------------------------------------------------------
+  // BATCH / SWARM MODE
+  // ---------------------------------------------------------
+  if (runBatchMode) {
+    const stdinContent = await readStdin();
+    if (!stdinContent) {
+      console.error("Error: --run-batch requires a JSON manifest via stdin");
+      console.error("Example: ma PLANNER.md | ma --run-batch");
+      process.exit(1);
+    }
+
+    let jobs;
+    try {
+      jobs = parseBatchManifest(stdinContent);
+    } catch (err) {
+      console.error(`Error parsing batch manifest: ${(err as Error).message}`);
+      process.exit(1);
+    }
+
+    if (verbose) {
+      console.error(`[batch] Dispatching ${jobs.length} agents (concurrency: ${concurrency || 4})...`);
+    }
+
+    const results = await runBatch(jobs, {
+      concurrency,
+      verbose,
+    });
+
+    // Output batch summary
+    console.log(formatBatchResults(results));
+
+    // Summary of successful branches
+    const branches = results
+      .filter((r) => r.exitCode === 0 && r.branchName)
+      .map((r) => r.branchName);
+
+    if (branches.length > 0) {
+      console.error("\n🌿 Worktrees committed. To merge:");
+      console.error(`   git merge ${branches.join(" ")}`);
+    }
+
+    // Exit with error if any job failed
+    process.exit(results.some((r) => r.exitCode !== 0) ? 1 : 0);
+  }
 
   if (!filePath) {
     console.error("Usage: <file.md> [text] [options]");
@@ -69,6 +125,51 @@ async function main() {
   const stdinContent = await readStdin();
 
   const content = await file.text();
+
+  // Handle --check mode: validate frontmatter without executing
+  if (check) {
+    let rawResult;
+    try {
+      rawResult = parseRawFrontmatter(content);
+    } catch (err) {
+      // Handle YAML syntax errors
+      const errorMsg = (err as Error).message;
+      if (json) {
+        console.log(JSON.stringify({
+          valid: false,
+          file: localFilePath,
+          errors: [errorMsg],
+          content,
+        }, null, 2));
+      } else {
+        console.error(`❌ ${localFilePath}: ${errorMsg}`);
+      }
+      process.exit(1);
+    }
+
+    // Validate against schema
+    const validation = safeParseFrontmatter(rawResult.frontmatter);
+
+    if (json) {
+      // JSON output for piping to Doctor agent
+      console.log(JSON.stringify({
+        valid: validation.success,
+        file: localFilePath,
+        errors: validation.errors || [],
+        content,
+      }, null, 2));
+    } else {
+      // Human-readable output
+      if (validation.success) {
+        console.log(`✅ ${localFilePath} is valid`);
+      } else {
+        console.error(`❌ ${localFilePath} has errors:`);
+        validation.errors?.forEach(e => console.error(`   - ${e}`));
+      }
+    }
+    process.exit(validation.success ? 0 : 1);
+  }
+
   const { frontmatter: baseFrontmatter, body: rawBody } = parseFrontmatter(content);
 
   // Handle wizard mode inputs
@@ -151,7 +252,18 @@ async function main() {
 
   // Resolve which runner to use
   const runner = resolveRunnerSync({ cliRunner, frontmatter });
-  console.log(`Runner: ${runner.name}`);
+
+  // Verbose output
+  if (verbose) {
+    console.error(`[verbose] Runner: ${runner.name}`);
+    console.error(`[verbose] Model: ${frontmatter.model || "(default)"}`);
+    if (contextFiles.length > 0) {
+      console.error(`[verbose] Context files: ${contextFiles.length}`);
+    }
+    if (passthroughArgs.length > 0) {
+      console.error(`[verbose] Passthrough args: ${passthroughArgs.join(" ")}`);
+    }
+  }
 
   // Handle dry-run mode - show what would be executed without running
   if (dryRun) {
@@ -210,11 +322,15 @@ async function main() {
   if (cacheKey && !noCache) {
     const cachedOutput = await readCache(cacheKey);
     if (cachedOutput !== null) {
-      console.log("Cache: hit");
+      if (verbose) console.error("[verbose] Cache: hit");
       console.log(cachedOutput);
       runResult = { exitCode: 0, output: cachedOutput };
     } else {
-      console.log("Cache: miss");
+      if (verbose) console.error("[verbose] Cache: miss");
+      if (verbose) {
+        const args = runner.buildArgs(runContext);
+        console.error(`[verbose] Command: ${runner.getCommand()} ${args.join(" ")}`);
+      }
       runResult = await runner.run(runContext);
       // Write to cache on success
       if (runResult.exitCode === 0 && runResult.output) {
@@ -222,6 +338,10 @@ async function main() {
       }
     }
   } else {
+    if (verbose) {
+      const args = runner.buildArgs(runContext);
+      console.error(`[verbose] Command: ${runner.getCommand()} ${args.join(" ")}`);
+    }
     runResult = await runner.run(runContext);
   }
 

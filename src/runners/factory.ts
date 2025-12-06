@@ -105,6 +105,34 @@ export interface ResolveRunnerOptions {
 }
 
 /**
+ * Helper to determine runner name from options
+ */
+function determineRunnerName(options: ResolveRunnerOptions): RunnerName {
+  const { cliRunner, frontmatter } = options;
+
+  // 1. CLI flag takes highest priority
+  if (cliRunner) {
+    return cliRunner;
+  }
+
+  // 2. Frontmatter explicit runner
+  if (frontmatter.runner && frontmatter.runner !== "auto") {
+    return frontmatter.runner;
+  }
+
+  // 3. Model heuristic
+  if (frontmatter.model) {
+    const detected = detectRunnerFromModel(frontmatter.model);
+    if (detected) {
+      return detected;
+    }
+  }
+
+  // 4. Fallback to copilot for backward compatibility
+  return "copilot";
+}
+
+/**
  * Resolve which runner to use based on priority:
  * 1. CLI flag
  * 2. Frontmatter runner field
@@ -112,52 +140,16 @@ export interface ResolveRunnerOptions {
  * 4. Fallback to copilot
  */
 export async function resolveRunner(options: ResolveRunnerOptions): Promise<Runner> {
-  const { cliRunner, frontmatter } = options;
-
-  // 1. CLI flag takes highest priority
-  if (cliRunner) {
-    return createRunner(cliRunner);
-  }
-
-  // 2. Frontmatter explicit runner
-  if (frontmatter.runner && frontmatter.runner !== "auto") {
-    return createRunner(frontmatter.runner);
-  }
-
-  // 3. Model heuristic
-  if (frontmatter.model) {
-    const detected = detectRunnerFromModel(frontmatter.model);
-    if (detected) {
-      return createRunner(detected);
-    }
-  }
-
-  // 4. Fallback to copilot for backward compatibility
-  return createRunner("copilot");
+  const runnerName = determineRunnerName(options);
+  return createRunner(runnerName);
 }
 
 /**
  * Get runner without async availability check (synchronous version)
  */
 export function resolveRunnerSync(options: ResolveRunnerOptions): Runner {
-  const { cliRunner, frontmatter } = options;
-
-  if (cliRunner) {
-    return createRunner(cliRunner);
-  }
-
-  if (frontmatter.runner && frontmatter.runner !== "auto") {
-    return createRunner(frontmatter.runner);
-  }
-
-  if (frontmatter.model) {
-    const detected = detectRunnerFromModel(frontmatter.model);
-    if (detected) {
-      return createRunner(detected);
-    }
-  }
-
-  return createRunner("copilot");
+  const runnerName = determineRunnerName(options);
+  return createRunner(runnerName);
 }
 
 /**

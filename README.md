@@ -255,6 +255,7 @@ Options:
   --dry-run               Show what would be executed
   --check                 Validate frontmatter without executing
   --json                  Output validation as JSON (with --check)
+  --setup                 Configure shell to run .md files directly
   --help, -h              Show help
 
 Passthrough:
@@ -363,27 +364,161 @@ for f in instructions/*.md; do
 done
 ```
 
-## Zsh Suffix Alias
+## Batch/Swarm Mode
+
+markdown-agent supports parallel agent execution using git worktrees for isolation. A "Planner" agent generates a JSON manifest, which `ma --run-batch` distributes across parallel workers.
+
+### Manifest Format
+
+```json
+[
+  {
+    "agent": "agents/CODER.md",
+    "branch": "feat/api",
+    "vars": { "file": "src/api.ts", "task": "Add REST endpoint" },
+    "model": "sonnet"
+  },
+  {
+    "agent": "agents/TEST.md",
+    "branch": true,
+    "runner": "codex"
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `agent` | string | **Required.** Path to agent markdown file |
+| `branch` | string \| boolean | Git branch for isolation. `true` auto-generates name |
+| `vars` | object | Template variables to inject |
+| `model` | string | Override model for this job |
+| `runner` | string | Override runner for this job |
+
+### Usage
 
 ```bash
-# Add to ~/.zshrc
+# Planner outputs JSON manifest, batch mode dispatches workers
+ma PLANNER.md --request "Add user profile" | ma --run-batch
+
+# Control parallelism
+ma --run-batch --concurrency 8 < jobs.json
+
+# Verbose output shows job progress
+ma --run-batch --verbose < jobs.json
+```
+
+### Git Worktree Isolation
+
+When `branch` is specified:
+1. Creates isolated git worktree in `.markdown-agent/worktrees/`
+2. Symlinks `node_modules` from root (no reinstall needed)
+3. Copies `.env` for secrets
+4. Runs agent in isolated directory
+5. Auto-commits changes on success
+6. Cleans up worktree folder (branch preserved for review)
+
+### Example: Planner + Workers
+
+**PLANNER.md** - Generates the manifest:
+
+```markdown
+---
+model: o1-preview
+extract: json
+silent: true
+---
+Request: "{{ request }}"
+
+Plan 3 parallel tasks. Output JSON array with:
+- "agent": path to worker (use "agents/CODER.md")
+- "branch": unique branch name
+- "vars": { "file": target file, "task": specific task }
+```
+
+**agents/CODER.md** - Generic worker:
+
+```markdown
+---
+model: claude-sonnet-4-20250514
+allow-tool: write
+silent: true
+---
+File: {{ file }}
+Task: {{ task }}
+
+Implement the code changes.
+```
+
+**Run:**
+
+```bash
+ma PLANNER.md --request "Add dark mode" | ma --run-batch
+```
+
+**Output:**
+
+```xml
+<batch_summary total="3" succeeded="3" failed="0">
+  <job index="0" agent="agents/CODER.md" status="success" branch="feat/theme-context" duration_ms="12340">
+    Created ThemeContext provider...
+  </job>
+  <job index="1" agent="agents/CODER.md" status="success" branch="feat/dark-styles" duration_ms="8920">
+    Added dark mode CSS variables...
+  </job>
+  <job index="2" agent="agents/CODER.md" status="success" branch="feat/toggle-ui" duration_ms="6540">
+    Implemented toggle button...
+  </job>
+</batch_summary>
+
+🌿 Worktrees committed. To merge:
+   git merge feat/theme-context feat/dark-styles feat/toggle-ui
+```
+
+## Shell Setup: Treat .md as Agents
+
+Run the setup wizard to configure your shell:
+
+```bash
+ma --setup
+```
+
+This adds a suffix alias that lets you run `.md` files directly:
+
+```bash
+./TASK.md                              # Run agent
+./TASK.md --model opus                 # With options
+./TASK.md "focus on tests" --dry-run   # With text and flags
+```
+
+### Manual Setup
+
+If you prefer to configure manually, add this to `~/.zshrc`:
+
+```bash
+# markdown-agent: Treat .md files as executable agents
 alias -s md='_handle_md'
 _handle_md() {
   local file="$1"
   shift
-  if [[ ! -f "$file" && -f "$HOME/agents/instructions/$file" ]]; then
-    file="$HOME/agents/instructions/$file"
+  # Pass file and any remaining args (--model, --silent, etc.) to handler
+  if command -v ma &>/dev/null; then
+    ma "$file" "$@"
+  else
+    echo "markdown-agent not installed. Install with: bun add -g markdown-agent"
+    echo "Attempting to install now..."
+    if command -v bun &>/dev/null; then
+      bun add -g markdown-agent && ma "$file" "$@"
+    elif command -v npm &>/dev/null; then
+      npm install -g markdown-agent && ma "$file" "$@"
+    else
+      echo "Neither bun nor npm found. Please install markdown-agent manually."
+      return 1
+    fi
   fi
-  bun run ~/agents/src/index.ts "$file" "$@"
 }
 ```
 
-Then run prompts directly:
-
-```bash
-./PROMPT.md
-ANALYZE.md --runner claude --model opus
-```
+Then reload your shell: `source ~/.zshrc`
 
 ## Notes
 

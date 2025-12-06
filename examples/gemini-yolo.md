@@ -1,9 +1,9 @@
 ---
 runner: gemini
 model: gemini-3-pro-preview
-allow-all-tools: true
+silent: true
 gemini:
   approval-mode: yolo
 ---
 
-Analyze this codebase and suggest improvements.
+Say "Hello from Gemini!" and nothing else.
