@@ -1,11 +1,40 @@
 # markdown-agent
 
+**Think in Markdown. Execute Markdown Agents.**
+
 A multi-backend CLI tool for executable markdown prompts. Run the same `.md` file against **Claude Code**, **OpenAI Codex**, **Google Gemini**, or **GitHub Copilot** by combining YAML frontmatter with markdown content.
+
+## Philosophy: Markdown as the Universal Agent Format
+
+The best AI workflows start with markdown. Why?
+
+- **Readable**: Anyone can read and understand what an agent does
+- **Versionable**: Track changes in git like any other code
+- **Shareable**: Send a `.md` file to a colleague—no setup required
+- **Portable**: Run the same agent on Claude today, Gemini tomorrow
+- **Composable**: Pipe agents together like Unix commands
+
+**For the best experience:** Create a directory of markdown agents and add it to your PATH. Your agents become available everywhere, just like any other CLI tool.
+
+```bash
+# Create your agents directory
+mkdir -p ~/agents
+cd ~/agents
+
+# Add to PATH in ~/.zshrc
+export PATH="$HOME/agents:$PATH"
+
+# Now any agent is runnable from anywhere
+REVIEW.md                    # Run code review agent
+COMMIT.md "fix auth bug"     # Generate commit message
+REFACTOR.md --model opus     # Refactor with specific model
+```
 
 ## Key Features
 
+- **Executable Markdown**: Your prompts are documentation. Your documentation is executable.
 - **Multi-Backend Support**: Run prompts on Claude, Codex, Gemini, or Copilot with automatic backend detection
-- **Executable Markdown**: Drop `.md` files with frontmatter to run AI prompts
+- **Agent Directories**: Keep agents on PATH for system-wide availability
 - **Command Hooks**: Run shell commands before/after AI execution with output piping
 - **Remote Execution**: Run prompts directly from URLs (like `npx`)
 - **Wizard Mode**: Interactive input prompts with templates
@@ -519,6 +548,89 @@ _handle_md() {
 ```
 
 Then reload your shell: `source ~/.zshrc`
+
+## Building Your Agent Library
+
+The real power of markdown-agent comes from building a personal library of agents. Create a directory, add it to your PATH, and your agents become first-class CLI tools.
+
+### Recommended Structure
+
+```
+~/agents/
+├── REVIEW.md          # Code review agent
+├── COMMIT.md          # Commit message generator
+├── REFACTOR.md        # Refactoring assistant
+├── EXPLAIN.md         # Code explainer
+├── TEST.md            # Test generator
+├── DEBUG.md           # Debugging helper
+├── PLAN.md            # Implementation planner
+└── project-specific/
+    ├── DEPLOY.md      # Your deployment workflow
+    └── MIGRATE.md     # Database migration helper
+```
+
+### Add to PATH
+
+Add this to your `~/.zshrc` (after running `ma --setup`):
+
+```bash
+# Make agents available everywhere
+export PATH="$HOME/agents:$PATH"
+```
+
+### Usage From Anywhere
+
+Once on PATH, agents work like any CLI command:
+
+```bash
+# From any directory
+REVIEW.md                           # Review current directory
+COMMIT.md "add user auth"           # Generate commit message
+EXPLAIN.md src/complex-function.ts  # Explain specific file
+
+# Pipe data through agents
+git diff | REVIEW.md                # Review staged changes
+cat error.log | DEBUG.md            # Debug from logs
+
+# Chain agents together
+PLAN.md "add dark mode" | COMMIT.md # Plan then commit
+```
+
+### Example Starter Agents
+
+**REVIEW.md** - Quick code review:
+```markdown
+---
+model: sonnet
+context: ["**/*.ts", "!node_modules"]
+silent: true
+---
+Review this code for bugs, security issues, and improvements.
+Focus on the most critical issues first.
+```
+
+**COMMIT.md** - Generate commit messages:
+```markdown
+---
+model: haiku
+before: git diff --cached
+silent: true
+---
+Generate a conventional commit message for these changes.
+Be concise. Follow the format: type(scope): description
+```
+
+**EXPLAIN.md** - Explain code:
+```markdown
+---
+model: sonnet
+silent: true
+---
+Explain this code clearly and concisely.
+Focus on: what it does, why it's designed this way, and any gotchas.
+
+{{ $1 }}
+```
 
 ## Notes
 
