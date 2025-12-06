@@ -1,5 +1,5 @@
 /**
- * Shared flag utilities for runners
+ * Shared flag utilities for harnesses
  * Handles passthrough flags and universal key mapping
  */
 
@@ -7,33 +7,51 @@ import type { AgentFrontmatter } from "../types";
 
 /**
  * Keys that are handled specially by the markdown-agent system
- * and should NOT be passed through to runners as CLI flags
+ * and should NOT be passed through to harnesses as CLI flags
  */
 const SYSTEM_KEYS = new Set([
-  // Runner selection
+  // Harness selection (support both new and legacy)
+  "harness",
   "runner",
-  // Runner-specific configs (handled separately)
+  // Harness-specific configs (handled separately)
   "claude", "codex", "copilot", "gemini",
   // markdown-agent specific features
   "inputs", "context", "extract", "cache", "requires", "before", "after",
 ]);
 
 /**
- * Universal keys that map to runner-specific flags
- * These are handled explicitly by each runner, not passed through
+ * Universal keys that map to harness-specific flags
+ * These are handled explicitly by each harness, not passed through
  */
 const UNIVERSAL_KEYS = new Set([
   "model",
   "interactive",
+  // Session (new)
+  "session",
+  // Session (deprecated)
   "resume",
   "continue",
+  // Approval (new)
+  "approval",
+  // Approval (deprecated)
   "allow-all-tools",
   "allow-all-paths",
+  // Tools (new)
+  "tools",
+  // Tools (deprecated)
   "allow-tool",
   "deny-tool",
+  // Dirs (new)
+  "dirs",
+  // Dirs (deprecated)
   "add-dir",
+  // MCP
   "mcp-config",
+  // Output (new)
+  "output",
+  // Output (deprecated)
   "output-format",
+  // Debug
   "debug",
 ]);
 
@@ -68,7 +86,7 @@ function valueToArgs(key: string, value: unknown): string[] {
 }
 
 export interface PassthroughOptions {
-  /** Keys that this runner handles explicitly (don't passthrough) */
+  /** Keys that this harness handles explicitly (don't passthrough) */
   handledKeys?: Set<string>;
   /** Additional keys to skip */
   skipKeys?: string[];
@@ -100,10 +118,10 @@ export function getPassthroughArgs(
 }
 
 /**
- * Extract passthrough flags from a runner-specific config object
+ * Extract passthrough flags from a harness-specific config object
  * e.g., frontmatter.claude, frontmatter.codex, etc.
  */
-export function getRunnerPassthroughArgs(
+export function getHarnessPassthroughArgs(
   config: Record<string, unknown> | undefined,
   handledKeys: Set<string>
 ): string[] {
@@ -120,6 +138,9 @@ export function getRunnerPassthroughArgs(
 
   return args;
 }
+
+/** @deprecated Use getHarnessPassthroughArgs instead */
+export const getRunnerPassthroughArgs = getHarnessPassthroughArgs;
 
 /**
  * Helper to get array value from string or string[]

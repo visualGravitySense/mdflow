@@ -11,7 +11,7 @@ import { generateCacheKey, readCache, writeCache } from "./cache";
 import { validatePrerequisites, handlePrerequisiteFailure } from "./prerequisites";
 import { formatDryRun, toCommandList, type DryRunInfo } from "./dryrun";
 import { isRemoteUrl, fetchRemote, cleanupRemote, printRemoteWarning } from "./remote";
-import { resolveRunnerSync, type RunContext } from "./runners";
+import { resolveHarnessSync, type RunContext } from "./harnesses";
 import { runBatch, formatBatchResults, parseBatchManifest } from "./batch";
 import { runSetup } from "./setup";
 import { offerRepair } from "./repair";
@@ -37,7 +37,7 @@ async function readStdin(): Promise<string> {
 }
 
 async function main() {
-  const { filePath, overrides, appendText, templateVars, noCache, dryRun, verbose, runner: cliRunner, passthroughArgs, check, json, runBatch: runBatchMode, concurrency, setup } = parseCliArgs(process.argv);
+  const { filePath, overrides, appendText, templateVars, noCache, dryRun, verbose, harness: cliHarness, passthroughArgs, check, json, runBatch: runBatchMode, concurrency, setup } = parseCliArgs(process.argv);
 
   // ---------------------------------------------------------
   // SETUP MODE
@@ -303,12 +303,12 @@ async function main() {
     finalBody = `${finalBody}\n\n${appendText}`;
   }
 
-  // Resolve which runner to use
-  const runner = resolveRunnerSync({ cliRunner, frontmatter });
+  // Resolve which harness to use
+  const harness = resolveHarnessSync({ cliHarness, frontmatter });
 
   // Verbose output
   if (verbose) {
-    console.error(`[verbose] Runner: ${runner.name}`);
+    console.error(`[verbose] Harness: ${harness.name}`);
     console.error(`[verbose] Model: ${frontmatter.model || "(default)"}`);
     if (contextFiles.length > 0) {
       console.error(`[verbose] Context files: ${contextFiles.length}`);
@@ -320,7 +320,7 @@ async function main() {
 
   // Handle dry-run mode - show what would be executed without running
   if (dryRun) {
-    const runnerArgs = runner.buildArgs({
+    const harnessArgs = harness.buildArgs({
       prompt: finalBody,
       frontmatter,
       passthroughArgs,
@@ -329,9 +329,11 @@ async function main() {
     const dryRunInfo: DryRunInfo = {
       frontmatter,
       prompt: finalBody,
-      copilotArgs: runnerArgs,
-      runnerArgs,
-      runnerName: runner.name,
+      copilotArgs: harnessArgs,  // Legacy field
+      harnessArgs,
+      harnessName: harness.name,
+      runnerArgs: harnessArgs,   // Legacy field
+      runnerName: harness.name,  // Legacy field
       contextFiles,
       beforeCommands: toCommandList(frontmatter.before),
       afterCommands: toCommandList(frontmatter.after),
@@ -381,10 +383,10 @@ async function main() {
     } else {
       if (verbose) console.error("[verbose] Cache: miss");
       if (verbose) {
-        const args = runner.buildArgs(runContext);
-        console.error(`[verbose] Command: ${runner.getCommand()} ${args.join(" ")}`);
+        const args = harness.buildArgs(runContext);
+        console.error(`[verbose] Command: ${harness.getCommand()} ${args.join(" ")}`);
       }
-      runResult = await runner.run(runContext);
+      runResult = await harness.run(runContext);
       // Write to cache on success
       if (runResult.exitCode === 0 && runResult.output) {
         await writeCache(cacheKey, runResult.output);
@@ -392,10 +394,10 @@ async function main() {
     }
   } else {
     if (verbose) {
-      const args = runner.buildArgs(runContext);
-      console.error(`[verbose] Command: ${runner.getCommand()} ${args.join(" ")}`);
+      const args = harness.buildArgs(runContext);
+      console.error(`[verbose] Command: ${harness.getCommand()} ${args.join(" ")}`);
     }
-    runResult = await runner.run(runContext);
+    runResult = await harness.run(runContext);
   }
 
   // Apply output extraction if specified
@@ -417,7 +419,7 @@ async function main() {
     await cleanupRemote(localFilePath);
   }
 
-  // Exit with runner's exit code (or first failed after command)
+  // Exit with harness's exit code (or first failed after command)
   const failedAfter = afterResults.find(r => r.exitCode !== 0);
   process.exit(failedAfter ? failedAfter.exitCode : runResult.exitCode);
 }

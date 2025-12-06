@@ -1,10 +1,13 @@
 import type { AgentFrontmatter, CommandResult } from "../types";
 import type { ContextFile } from "../context";
 
-/** Supported runner backends */
-export type RunnerName = "claude" | "codex" | "copilot" | "gemini";
+/** Supported harness backends */
+export type HarnessName = "claude" | "codex" | "copilot" | "gemini";
 
-/** Context passed to runners for execution */
+/** @deprecated Use HarnessName instead */
+export type RunnerName = HarnessName;
+
+/** Context passed to harnesses for execution */
 export interface RunContext {
   /** The final compiled prompt (with before output, context, stdin) */
   prompt: string;
@@ -16,16 +19,16 @@ export interface RunContext {
   captureOutput: boolean;
 }
 
-/** Result from runner execution */
+/** Result from harness execution */
 export interface RunResult {
   exitCode: number;
   output: string;
 }
 
-/** Runner interface - all backends implement this */
-export interface Runner {
-  /** Runner identifier */
-  readonly name: RunnerName;
+/** Harness interface - all backends implement this */
+export interface Harness {
+  /** Harness identifier */
+  readonly name: HarnessName;
 
   /** Build command arguments from context */
   buildArgs(ctx: RunContext): string[];
@@ -33,13 +36,16 @@ export interface Runner {
   /** Get the command/binary name to execute */
   getCommand(): string;
 
-  /** Execute the runner and return result */
+  /** Execute the harness and return result */
   run(ctx: RunContext): Promise<RunResult>;
 }
 
-/** Base runner with shared implementation */
-export abstract class BaseRunner implements Runner {
-  abstract readonly name: RunnerName;
+/** @deprecated Use Harness instead */
+export type Runner = Harness;
+
+/** Base harness with shared implementation */
+export abstract class BaseHarness implements Harness {
+  abstract readonly name: HarnessName;
   abstract buildArgs(ctx: RunContext): string[];
   abstract getCommand(): string;
 
@@ -64,3 +70,6 @@ export abstract class BaseRunner implements Runner {
     return { exitCode, output };
   }
 }
+
+/** @deprecated Use BaseHarness instead */
+export const BaseRunner = BaseHarness;

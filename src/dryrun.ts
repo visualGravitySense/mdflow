@@ -5,14 +5,19 @@
 
 import type { AgentFrontmatter, CopilotFrontmatter } from "./types";
 import type { ContextFile } from "./context";
-import type { RunnerName } from "./runners/types";
+import type { HarnessName } from "./harnesses/types";
 
 export interface DryRunInfo {
   frontmatter: AgentFrontmatter;
   prompt: string;
-  copilotArgs: string[];  // Kept for backward compatibility
+  /** @deprecated Use harnessArgs instead */
+  copilotArgs: string[];
+  harnessArgs?: string[];
+  harnessName?: HarnessName;
+  /** @deprecated Use harnessArgs instead */
   runnerArgs?: string[];
-  runnerName?: RunnerName;
+  /** @deprecated Use harnessName instead */
+  runnerName?: HarnessName;
   contextFiles: ContextFile[];
   beforeCommands: string[];
   afterCommands: string[];
@@ -24,8 +29,8 @@ export interface DryRunInfo {
  */
 export function formatDryRun(info: DryRunInfo): string {
   const sections: string[] = [];
-  const runnerName = info.runnerName || "copilot";
-  const args = info.runnerArgs || info.copilotArgs;
+  const harnessName = info.harnessName || info.runnerName || "copilot";
+  const args = info.harnessArgs || info.runnerArgs || info.copilotArgs;
 
   // Header
   sections.push("═══════════════════════════════════════════════════════════════");
@@ -77,10 +82,10 @@ export function formatDryRun(info: DryRunInfo): string {
     sections.push("");
   }
 
-  // Runner command
-  sections.push(`🤖 ${runnerName.toUpperCase()} COMMAND`);
+  // Harness command
+  sections.push(`🤖 ${harnessName.toUpperCase()} COMMAND`);
   sections.push("───────────────────────────────────────────────────────────────");
-  sections.push(`  ${runnerName} ${args.join(" ")} <prompt>`);
+  sections.push(`  ${harnessName} ${args.join(" ")} <prompt>`);
   sections.push("");
 
   // Prompt preview
@@ -102,7 +107,7 @@ export function formatDryRun(info: DryRunInfo): string {
     sections.push("⚡ AFTER COMMANDS (will execute)");
     sections.push("───────────────────────────────────────────────────────────────");
     for (let i = 0; i < info.afterCommands.length; i++) {
-      const note = i === 0 ? ` (receives ${runnerName} output via stdin)` : "";
+      const note = i === 0 ? ` (receives ${harnessName} output via stdin)` : "";
       sections.push(`  ${i + 1}. ${info.afterCommands[i]}${note}`);
     }
     sections.push("");
@@ -111,7 +116,7 @@ export function formatDryRun(info: DryRunInfo): string {
   // Configuration summary
   sections.push("⚙️  CONFIGURATION");
   sections.push("───────────────────────────────────────────────────────────────");
-  sections.push(`  Runner: ${runnerName}`);
+  sections.push(`  Harness: ${harnessName}`);
   if (info.frontmatter.model) {
     sections.push(`  Model: ${info.frontmatter.model}`);
   }

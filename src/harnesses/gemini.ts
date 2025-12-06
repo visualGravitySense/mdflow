@@ -1,13 +1,13 @@
 /**
- * Google Gemini CLI runner
+ * Google Gemini CLI harness
  * Maps universal frontmatter to gemini CLI flags
  */
 
-import { BaseRunner, type RunContext, type RunResult, type RunnerName } from "./types";
-import { getRunnerPassthroughArgs, toArray } from "./flags";
+import { BaseHarness, type RunContext, type RunResult, type HarnessName } from "./types";
+import { getHarnessPassthroughArgs, toArray } from "./flags";
 
 /**
- * Keys explicitly handled by this runner (not passed through)
+ * Keys explicitly handled by this harness (not passed through)
  */
 const HANDLED_GEMINI_KEYS = new Set([
   "sandbox",
@@ -20,8 +20,8 @@ const HANDLED_GEMINI_KEYS = new Set([
   "screen-reader",
 ]);
 
-export class GeminiRunner extends BaseRunner {
-  readonly name: RunnerName = "gemini";
+export class GeminiHarness extends BaseHarness {
+  readonly name: HarnessName = "gemini";
 
   getCommand(): string {
     return "gemini";
@@ -41,33 +41,48 @@ export class GeminiRunner extends BaseRunner {
 
     // Note: interactive mode is handled in run() via --prompt-interactive
 
-    // Resume/Continue session (universal)
-    if (frontmatter.continue || frontmatter.resume === true) {
+    // Session: new unified form takes precedence over deprecated
+    const sessionResume = frontmatter.session?.resume ?? frontmatter.resume;
+    const sessionContinue = frontmatter.continue;
+    if (sessionContinue || sessionResume === true) {
       args.push("--resume", "latest");
-    } else if (typeof frontmatter.resume === "string") {
-      args.push("--resume", frontmatter.resume);
+    } else if (typeof sessionResume === "string") {
+      args.push("--resume", sessionResume);
     }
 
-    // Directory access (add-dir -> --include-directories)
-    for (const dir of toArray(frontmatter["add-dir"])) {
+    // Directory access: dirs (new) or add-dir (deprecated)
+    const directories = frontmatter.dirs ?? frontmatter["add-dir"];
+    for (const dir of toArray(directories)) {
       args.push("--include-directories", dir);
     }
 
-    // God mode: allow-all-tools -> --yolo
-    if (frontmatter["allow-all-tools"] || geminiConfig.yolo) {
+    // Approval mode: approval (new) or allow-all-tools (deprecated)
+    // yolo -> --yolo
+    const isYolo = frontmatter.approval === "yolo" ||
+                   frontmatter["allow-all-tools"] ||
+                   geminiConfig.yolo;
+    if (isYolo) {
       args.push("--yolo");
     }
 
-    // Tool whitelist (universal)
-    for (const tool of toArray(frontmatter["allow-tool"])) {
+    // Sandbox mode: approval: "sandbox" (new) or gemini.sandbox (specific)
+    const isSandbox = frontmatter.approval === "sandbox";
+    if (isSandbox || geminiConfig.sandbox) {
+      args.push("--sandbox");
+    }
+
+    // Tool whitelist: tools.allow (new) or allow-tool (deprecated)
+    const toolsAllow = frontmatter.tools?.allow ?? frontmatter["allow-tool"];
+    for (const tool of toArray(toolsAllow)) {
       args.push("--allowed-tools", tool);
     }
 
     // Note: Gemini doesn't support deny-tool
 
-    // Output format (universal)
-    if (frontmatter["output-format"]) {
-      args.push("--output-format", frontmatter["output-format"]);
+    // Output format: output (new) or output-format (deprecated)
+    const outputFormat = frontmatter.output ?? frontmatter["output-format"];
+    if (outputFormat) {
+      args.push("--output-format", outputFormat);
     }
 
     // Debug
@@ -76,11 +91,6 @@ export class GeminiRunner extends BaseRunner {
     }
 
     // --- Gemini-Specific Keys ---
-
-    // Sandbox mode
-    if (geminiConfig.sandbox) {
-      args.push("--sandbox");
-    }
 
     // Approval mode (more granular than yolo)
     if (geminiConfig["approval-mode"]) {
@@ -113,7 +123,7 @@ export class GeminiRunner extends BaseRunner {
     }
 
     // --- Passthrough: any gemini-specific keys we didn't handle ---
-    args.push(...getRunnerPassthroughArgs(geminiConfig, HANDLED_GEMINI_KEYS));
+    args.push(...getHarnessPassthroughArgs(geminiConfig, HANDLED_GEMINI_KEYS));
 
     // --- CLI passthrough args (highest priority) ---
     args.push(...ctx.passthroughArgs);

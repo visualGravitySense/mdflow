@@ -1,13 +1,13 @@
 /**
- * Claude Code CLI runner
+ * Claude Code CLI harness
  * Maps universal frontmatter to claude CLI flags
  */
 
-import { BaseRunner, type RunContext, type RunResult, type RunnerName } from "./types";
-import { getRunnerPassthroughArgs, toArray } from "./flags";
+import { BaseHarness, type RunContext, type RunResult, type HarnessName } from "./types";
+import { getHarnessPassthroughArgs, toArray } from "./flags";
 
 /**
- * Keys explicitly handled by this runner (not passed through)
+ * Keys explicitly handled by this harness (not passed through)
  */
 const HANDLED_CLAUDE_KEYS = new Set([
   "dangerously-skip-permissions",
@@ -39,8 +39,8 @@ export function mapClaudeModel(model: string): string {
   return modelMap[model] || model;
 }
 
-export class ClaudeRunner extends BaseRunner {
-  readonly name: RunnerName = "claude";
+export class ClaudeHarness extends BaseHarness {
+  readonly name: HarnessName = "claude";
 
   getCommand(): string {
     return "claude";
@@ -63,30 +63,43 @@ export class ClaudeRunner extends BaseRunner {
       args.push("-p");
     }
 
-    // Resume/Continue session
-    if (frontmatter.continue || frontmatter.resume === true) {
+    // Session: new unified form takes precedence
+    const sessionResume = frontmatter.session?.resume ?? frontmatter.resume;
+    const sessionContinue = frontmatter.continue;
+    if (sessionContinue || sessionResume === true) {
       args.push("-c");
-    } else if (typeof frontmatter.resume === "string") {
-      args.push("-r", frontmatter.resume);
+    } else if (typeof sessionResume === "string") {
+      args.push("-r", sessionResume);
+    }
+    // Fork session (Claude-specific, but can be in universal session config)
+    if (frontmatter.session?.fork || claudeConfig["fork-session"]) {
+      args.push("--fork-session");
     }
 
-    // Directory access
-    for (const dir of toArray(frontmatter["add-dir"])) {
+    // Directory access: dirs (new) or add-dir (deprecated)
+    const directories = frontmatter.dirs ?? frontmatter["add-dir"];
+    for (const dir of toArray(directories)) {
       args.push("--add-dir", dir);
     }
 
-    // God mode: allow-all-tools -> --dangerously-skip-permissions
-    if (frontmatter["allow-all-tools"] || claudeConfig["dangerously-skip-permissions"]) {
+    // Approval mode: approval (new) or allow-all-tools (deprecated)
+    const isYolo = frontmatter.approval === "yolo" ||
+                   frontmatter["allow-all-tools"] ||
+                   claudeConfig["dangerously-skip-permissions"];
+    if (isYolo) {
       args.push("--dangerously-skip-permissions");
     }
+    // Note: "sandbox" mode doesn't change Claude behavior (no sandboxing in Claude)
 
-    // Tool whitelist (universal)
-    for (const tool of toArray(frontmatter["allow-tool"])) {
+    // Tool whitelist: tools.allow (new) or allow-tool (deprecated)
+    const toolsAllow = frontmatter.tools?.allow ?? frontmatter["allow-tool"];
+    for (const tool of toArray(toolsAllow)) {
       args.push("--allowed-tools", tool);
     }
 
-    // Tool blacklist (universal)
-    for (const tool of toArray(frontmatter["deny-tool"])) {
+    // Tool blacklist: tools.deny (new) or deny-tool (deprecated)
+    const toolsDeny = frontmatter.tools?.deny ?? frontmatter["deny-tool"];
+    for (const tool of toArray(toolsDeny)) {
       args.push("--disallowed-tools", tool);
     }
 
@@ -95,9 +108,10 @@ export class ClaudeRunner extends BaseRunner {
       args.push("--mcp-config", config);
     }
 
-    // Output format
-    if (frontmatter["output-format"]) {
-      args.push("--output-format", frontmatter["output-format"]);
+    // Output format: output (new) or output-format (deprecated)
+    const outputFormat = frontmatter.output ?? frontmatter["output-format"];
+    if (outputFormat) {
+      args.push("--output-format", outputFormat);
     }
 
     // Debug
@@ -160,7 +174,7 @@ export class ClaudeRunner extends BaseRunner {
     }
 
     // --- Passthrough: any claude-specific keys we didn't handle ---
-    args.push(...getRunnerPassthroughArgs(claudeConfig, HANDLED_CLAUDE_KEYS));
+    args.push(...getHarnessPassthroughArgs(claudeConfig, HANDLED_CLAUDE_KEYS));
 
     // --- CLI passthrough args (highest priority) ---
     args.push(...ctx.passthroughArgs);

@@ -1,12 +1,12 @@
 /**
- * GitHub Copilot CLI runner
+ * GitHub Copilot CLI harness
  */
 
-import { BaseRunner, type RunContext, type RunnerName } from "./types";
-import { getRunnerPassthroughArgs, toArray } from "./flags";
+import { BaseHarness, type RunContext, type HarnessName } from "./types";
+import { getHarnessPassthroughArgs, toArray } from "./flags";
 
 /**
- * Keys explicitly handled by this runner (not passed through)
+ * Keys explicitly handled by this harness (not passed through)
  */
 const HANDLED_COPILOT_KEYS = new Set([
   "agent",
@@ -19,8 +19,8 @@ const HANDLED_COPILOT_KEYS = new Set([
   "log-level",
 ]);
 
-export class CopilotRunner extends BaseRunner {
-  readonly name: RunnerName = "copilot";
+export class CopilotHarness extends BaseHarness {
+  readonly name: HarnessName = "copilot";
 
   getCommand(): string {
     return "copilot";
@@ -40,20 +40,25 @@ export class CopilotRunner extends BaseRunner {
 
     // Interactive mode handled below with -p vs --interactive
 
-    // Resume/Continue session
-    if (frontmatter.continue || frontmatter.resume === true) {
+    // Session: new unified form takes precedence over deprecated
+    const sessionResume = frontmatter.session?.resume ?? frontmatter.resume;
+    const sessionContinue = frontmatter.continue;
+    if (sessionContinue || sessionResume === true) {
       args.push("--continue");
-    } else if (typeof frontmatter.resume === "string") {
-      args.push("--resume", frontmatter.resume);
+    } else if (typeof sessionResume === "string") {
+      args.push("--resume", sessionResume);
     }
 
-    // Directory access
-    for (const dir of toArray(frontmatter["add-dir"])) {
+    // Directory access: dirs (new) or add-dir (deprecated)
+    const directories = frontmatter.dirs ?? frontmatter["add-dir"];
+    for (const dir of toArray(directories)) {
       args.push("--add-dir", dir);
     }
 
-    // God mode: allow-all-tools
-    if (frontmatter["allow-all-tools"]) {
+    // Approval mode: approval (new) or allow-all-tools (deprecated)
+    // yolo -> --allow-all-tools
+    const isYolo = frontmatter.approval === "yolo" || frontmatter["allow-all-tools"];
+    if (isYolo) {
       args.push("--allow-all-tools");
     }
 
@@ -62,13 +67,15 @@ export class CopilotRunner extends BaseRunner {
       args.push("--allow-all-paths");
     }
 
-    // Tool whitelist (universal)
-    for (const tool of toArray(frontmatter["allow-tool"])) {
+    // Tool whitelist: tools.allow (new) or allow-tool (deprecated)
+    const toolsAllow = frontmatter.tools?.allow ?? frontmatter["allow-tool"];
+    for (const tool of toArray(toolsAllow)) {
       args.push("--allow-tool", tool);
     }
 
-    // Tool blacklist (universal)
-    for (const tool of toArray(frontmatter["deny-tool"])) {
+    // Tool blacklist: tools.deny (new) or deny-tool (deprecated)
+    const toolsDeny = frontmatter.tools?.deny ?? frontmatter["deny-tool"];
+    for (const tool of toArray(toolsDeny)) {
       args.push("--deny-tool", tool);
     }
 
@@ -135,7 +142,7 @@ export class CopilotRunner extends BaseRunner {
     }
 
     // --- Passthrough: any copilot-specific keys we didn't handle ---
-    args.push(...getRunnerPassthroughArgs(copilotConfig, HANDLED_COPILOT_KEYS));
+    args.push(...getHarnessPassthroughArgs(copilotConfig, HANDLED_COPILOT_KEYS));
 
     // --- CLI passthrough args (highest priority) ---
     args.push(...ctx.passthroughArgs);

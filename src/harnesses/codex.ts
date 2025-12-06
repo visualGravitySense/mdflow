@@ -1,13 +1,13 @@
 /**
- * OpenAI Codex CLI runner
+ * OpenAI Codex CLI harness
  * Maps universal frontmatter to codex CLI flags
  */
 
-import { BaseRunner, type RunContext, type RunResult, type RunnerName } from "./types";
-import { getRunnerPassthroughArgs, toArray } from "./flags";
+import { BaseHarness, type RunContext, type RunResult, type HarnessName } from "./types";
+import { getHarnessPassthroughArgs, toArray } from "./flags";
 
 /**
- * Keys explicitly handled by this runner (not passed through)
+ * Keys explicitly handled by this harness (not passed through)
  */
 const HANDLED_CODEX_KEYS = new Set([
   "sandbox",
@@ -21,8 +21,8 @@ const HANDLED_CODEX_KEYS = new Set([
   "profile",
 ]);
 
-export class CodexRunner extends BaseRunner {
-  readonly name: RunnerName = "codex";
+export class CodexHarness extends BaseHarness {
+  readonly name: HarnessName = "codex";
 
   getCommand(): string {
     return "codex";
@@ -42,14 +42,26 @@ export class CodexRunner extends BaseRunner {
 
     // Note: interactive mode is handled in run() via exec subcommand
 
-    // Directory access (universal add-dir -> --add-dir for Codex)
-    for (const dir of toArray(frontmatter["add-dir"])) {
+    // Directory access: dirs (new) or add-dir (deprecated)
+    const directories = frontmatter.dirs ?? frontmatter["add-dir"];
+    for (const dir of toArray(directories)) {
       args.push("--add-dir", dir);
     }
 
-    // God mode: allow-all-tools -> --full-auto
-    if (frontmatter["allow-all-tools"] || codexConfig["full-auto"]) {
+    // Approval mode: approval (new) or allow-all-tools (deprecated)
+    // yolo -> --full-auto
+    const isYolo = frontmatter.approval === "yolo" ||
+                   frontmatter["allow-all-tools"] ||
+                   codexConfig["full-auto"];
+    if (isYolo) {
       args.push("--full-auto");
+    }
+
+    // Sandbox mode: approval: "sandbox" (new) or codex.sandbox (specific)
+    const isSandbox = frontmatter.approval === "sandbox";
+    if (isSandbox && !codexConfig.sandbox) {
+      // Default sandbox level for universal approval: "sandbox"
+      args.push("--sandbox", "workspace-write");
     }
 
     // Note: Codex doesn't support allow-tool/deny-tool granularity
@@ -103,7 +115,7 @@ export class CodexRunner extends BaseRunner {
     }
 
     // --- Passthrough: any codex-specific keys we didn't handle ---
-    args.push(...getRunnerPassthroughArgs(codexConfig, HANDLED_CODEX_KEYS));
+    args.push(...getHarnessPassthroughArgs(codexConfig, HANDLED_CODEX_KEYS));
 
     // --- CLI passthrough args (highest priority) ---
     args.push(...ctx.passthroughArgs);

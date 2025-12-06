@@ -25,8 +25,11 @@ export const inputFieldSchema = z.object({
   { message: "Select inputs require a non-empty choices array" }
 );
 
-/** Runner selection */
-const runnerSchema = z.enum(["claude", "codex", "copilot", "gemini", "auto"]).optional();
+/** Harness selection */
+const harnessSchema = z.enum(["claude", "codex", "copilot", "gemini", "auto"]).optional();
+
+/** @deprecated Use harnessSchema instead */
+const runnerSchema = harnessSchema;
 
 /** Supported AI models (flexible string to support all backends) */
 const modelSchema = z.string().optional();
@@ -75,7 +78,9 @@ const geminiConfigSchema = z.object({
 
 /** Main frontmatter schema */
 export const frontmatterSchema = z.object({
-  // Runner selection
+  // Harness selection (support both new and legacy)
+  harness: harnessSchema,
+  /** @deprecated Use harness instead */
   runner: runnerSchema,
 
   // Wizard mode inputs

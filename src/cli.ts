@@ -1,5 +1,5 @@
 import type { AgentFrontmatter, CopilotFrontmatter } from "./types";
-import type { RunnerName } from "./runners/types";
+import type { HarnessName } from "./harnesses/types";
 import { parseTemplateArgs, type TemplateVars } from "./template";
 
 export interface CliArgs {
@@ -10,7 +10,9 @@ export interface CliArgs {
   noCache: boolean;
   dryRun: boolean;
   verbose: boolean;
-  runner?: RunnerName;
+  /** @deprecated Use harness instead */
+  runner?: HarnessName;
+  harness?: HarnessName;
   passthroughArgs: string[];
   check: boolean;
   json: boolean;
@@ -43,7 +45,10 @@ export const KNOWN_FLAGS = new Set([
   "--",  // Passthrough separator
 ]);
 
-const VALID_RUNNERS = new Set(["claude", "codex", "copilot", "gemini"]);
+const VALID_HARNESSES = new Set(["claude", "codex", "copilot", "gemini"]);
+
+/** @deprecated Use VALID_HARNESSES instead */
+const VALID_RUNNERS = VALID_HARNESSES;
 
 /**
  * Parse CLI arguments and extract overrides for frontmatter
@@ -57,7 +62,7 @@ export function parseCliArgs(argv: string[]): CliArgs {
   let noCache = false;
   let dryRun = false;
   let verbose = false;
-  let runner: RunnerName | undefined;
+  let harness: HarnessName | undefined;
   let inPassthrough = false;
   let check = false;
   let json = false;
@@ -151,13 +156,14 @@ export function parseCliArgs(argv: string[]): CliArgs {
         }
         break;
 
-      case "--runner":
+      case "--harness":
+      case "--runner":  // Legacy support
       case "-r":
-        if (nextArg && VALID_RUNNERS.has(nextArg)) {
-          runner = nextArg as RunnerName;
+        if (nextArg && VALID_HARNESSES.has(nextArg)) {
+          harness = nextArg as HarnessName;
           i++;
         } else if (nextArg) {
-          console.error(`Invalid runner: ${nextArg}. Valid options: claude, codex, copilot, gemini`);
+          console.error(`Invalid harness: ${nextArg}. Valid options: claude, codex, copilot, gemini`);
           process.exit(1);
         }
         break;
@@ -217,7 +223,8 @@ export function parseCliArgs(argv: string[]): CliArgs {
     noCache,
     dryRun,
     verbose,
-    runner,
+    harness,
+    runner: harness,  // Legacy support
     passthroughArgs,
     check,
     json,
@@ -268,7 +275,7 @@ Arguments:
   text                    Additional text appended to the prompt body
 
 Options:
-  --runner, -r <runner>   Select backend: claude, codex, copilot, gemini (default: auto)
+  --harness, -r <name>    Select backend: claude, codex, copilot, gemini (default: auto)
   --model, -m <model>     Override AI model
   --agent <agent>         Override custom agent (copilot)
   --silent, -s            Suppress session metadata output (default: on)
@@ -283,7 +290,7 @@ Options:
   --dry-run               Show what would be executed without running
   --check                 Validate frontmatter without executing
   --json                  Output validation results as JSON (with --check)
-  --verbose, -v           Show debug info (runner, args, etc.)
+  --verbose, -v           Show debug info (harness, args, etc.)
   --setup                 Configure shell to run .md files directly
   --help, -h              Show this help
 
@@ -292,7 +299,7 @@ Batch/Swarm Mode:
   --concurrency <n>       Max parallel agents (default: 4)
 
 Passthrough:
-  --                      Everything after -- is passed to the runner
+  --                      Everything after -- is passed to the harness
 
 Setup (treat .md as agents):
   ma --setup              # Interactive wizard to configure your shell
@@ -315,9 +322,9 @@ Batch Manifest Format:
 
 Examples:
   DEMO.md "focus on error handling"
-  DEMO.md --runner claude --model sonnet
-  DEMO.md --runner codex --model gpt-5
-  DEMO.md --runner gemini --model gemini-3-pro-preview
+  DEMO.md --harness claude --model sonnet
+  DEMO.md --harness codex --model gpt-5
+  DEMO.md --harness gemini --model gemini-3-pro-preview
   DEMO.md -- --verbose --debug
 `);
 }

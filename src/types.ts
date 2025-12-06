@@ -1,4 +1,7 @@
-import type { RunnerName } from "./runners/types";
+import type { HarnessName } from "./harnesses/types";
+
+/** @deprecated Use HarnessName instead */
+export type RunnerName = HarnessName;
 
 /** Input field definition for wizard mode */
 export interface InputField {
@@ -76,10 +79,28 @@ export interface GeminiConfig {
   [key: string]: unknown;
 }
 
+/** Tool permission configuration */
+export interface ToolsConfig {
+  /** Tools to allow without confirmation */
+  allow?: string | string[];
+  /** Tools to deny (takes precedence over allow) */
+  deny?: string | string[];
+}
+
+/** Session management configuration */
+export interface SessionConfig {
+  /** Resume session: true = latest, string = session ID */
+  resume?: string | boolean;
+  /** Fork the session (create new ID when resuming) */
+  fork?: boolean;
+}
+
 /** Universal frontmatter that maps to all backends */
 export interface AgentFrontmatter {
-  // --- Runner Selection ---
-  runner?: RunnerName | "auto";  // Default: auto
+  // --- Harness Selection ---
+  /** @deprecated Use harness instead */
+  runner?: HarnessName | "auto";
+  harness?: HarnessName | "auto";  // Default: auto
 
   // --- Identity ---
   model?: string;  // Maps to --model on all backends
@@ -92,26 +113,53 @@ export interface AgentFrontmatter {
   interactive?: boolean;
 
   // --- Session Management ---
-  /** Resume session: true = latest, string = session ID */
+  /**
+   * Session configuration (preferred)
+   * @example session: { resume: true }
+   * @example session: { resume: "abc123", fork: true }
+   */
+  session?: SessionConfig;
+  /** @deprecated Use session.resume instead */
   resume?: string | boolean;
-  /** Alias for resume: true */
+  /** @deprecated Use session: { resume: true } instead */
   continue?: boolean;
 
-  // --- Permissions (Universal) ---
+  // --- Approval Mode ---
   /**
-   * "God Mode" - maps to runner's full-auto equivalent:
-   * Claude: --dangerously-skip-permissions
-   * Codex: --full-auto
-   * Gemini: --yolo
-   * Copilot: --allow-all-tools
+   * Approval mode for tool execution:
+   * - "ask": Prompt before running tools (default)
+   * - "sandbox": Auto-approve but sandboxed where supported (Codex --full-auto)
+   * - "yolo": Bypass all approvals (dangerous)
+   *
+   * Maps to:
+   * - Claude: ask=default, sandbox=default, yolo=--dangerously-skip-permissions
+   * - Codex: ask=untrusted, sandbox=--full-auto, yolo=--dangerously-bypass-approvals-and-sandbox
+   * - Gemini: ask=default, sandbox=default, yolo=--yolo
+   * - Copilot: ask=default, sandbox=default, yolo=--allow-all-tools
    */
+  approval?: "ask" | "sandbox" | "yolo";
+  /** @deprecated Use approval: "yolo" instead */
   "allow-all-tools"?: boolean;
-  "allow-all-paths"?: boolean;
-  /** Tool whitelist (Claude: --allowed-tools, Gemini: --allowed-tools, Copilot: --allow-tool) */
+
+  // --- Tool Permissions ---
+  /**
+   * Tool whitelist/blacklist (preferred nested form)
+   * @example tools: { allow: ["read", "write"], deny: ["shell"] }
+   */
+  tools?: ToolsConfig;
+  /** @deprecated Use tools.allow instead */
   "allow-tool"?: string | string[];
-  /** Tool blacklist (Claude: --disallowed-tools, Copilot: --deny-tool) */
+  /** @deprecated Use tools.deny instead */
   "deny-tool"?: string | string[];
-  /** Additional directories for tool access */
+
+  // --- Path Permissions ---
+  "allow-all-paths"?: boolean;
+  /**
+   * Additional directories for tool access (preferred)
+   * @example dirs: ["./src", "./tests"]
+   */
+  dirs?: string | string[];
+  /** @deprecated Use dirs instead */
   "add-dir"?: string | string[];
 
   // --- MCP Configuration ---
@@ -119,7 +167,12 @@ export interface AgentFrontmatter {
   "mcp-config"?: string | string[];
 
   // --- Output Control ---
-  /** Output format: text, json, stream-json */
+  /**
+   * Output format (preferred)
+   * @example output: "json"
+   */
+  output?: "text" | "json" | "stream-json";
+  /** @deprecated Use output instead */
   "output-format"?: "text" | "json" | "stream-json";
 
   // --- Debug ---
@@ -132,7 +185,7 @@ export interface AgentFrontmatter {
   // --- Context ---
   context?: string | string[];  // Glob patterns for files to include
 
-  // --- Output ---
+  // --- Output Extraction ---
   extract?: "json" | "code" | "markdown" | "raw";  // Output extraction mode
 
   // --- Caching ---
@@ -156,6 +209,8 @@ export interface AgentFrontmatter {
    * These get passed through to the runner if they look like CLI flags.
    * This allows using any runner flag directly in frontmatter even if
    * we haven't mapped it to a universal key yet.
+   *
+   * Example: If you set `yolo: true` it passes through as --yolo to the runner.
    */
   [key: string]: unknown;
 }
