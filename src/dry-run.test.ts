@@ -98,7 +98,7 @@ Hello, this is a test prompt.`
     );
 
     const proc = Bun.spawn(["bun", "run", "src/index.ts", testFile, "--dry-run"], {
-      cwd: "/Users/johnlindquist/agents-feature-dry-run-mode",
+      cwd: process.cwd(),
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -130,7 +130,7 @@ Hello, {{ name }}! Welcome.`
     const proc = Bun.spawn(
       ["bun", "run", "src/index.ts", testFile, "Alice", "--dry-run"],
       {
-        cwd: "/Users/johnlindquist/agents-feature-dry-run-mode",
+        cwd: process.cwd(),
         stdout: "pipe",
         stderr: "pipe",
       }
@@ -158,7 +158,7 @@ Test prompt for generic file.`
     const proc = Bun.spawn(
       ["bun", "run", "src/index.ts", testFile, "--command", "gemini", "--dry-run"],
       {
-        cwd: "/Users/johnlindquist/agents-feature-dry-run-mode",
+        cwd: process.cwd(),
         stdout: "pipe",
         stderr: "pipe",
       }
@@ -188,7 +188,7 @@ ${promptText}`
     );
 
     const proc = Bun.spawn(["bun", "run", "src/index.ts", testFile, "--dry-run"], {
-      cwd: "/Users/johnlindquist/agents-feature-dry-run-mode",
+      cwd: process.cwd(),
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -211,7 +211,7 @@ This should not run.`
     );
 
     const proc = Bun.spawn(["bun", "run", "src/index.ts", testFile, "--dry-run"], {
-      cwd: "/Users/johnlindquist/agents-feature-dry-run-mode",
+      cwd: process.cwd(),
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -238,7 +238,7 @@ Test prompt.`
     const proc = Bun.spawn(
       ["bun", "run", "src/index.ts", testFile, "--dry-run", "--verbose", "--debug"],
       {
-        cwd: "/Users/johnlindquist/agents-feature-dry-run-mode",
+        cwd: process.cwd(),
         stdout: "pipe",
         stderr: "pipe",
       }
