@@ -309,7 +309,7 @@ Options:
   --check                 Validate frontmatter without executing
   --json                  Output validation as JSON (with --check)
   --verbose, -v           Show debug info
-  --debug                 Write structured logs to ~/.markdown-agent/debug.log
+  --logs                  Show log directory (~/.markdown-agent/logs/)
   --setup                 Configure shell to run .md files directly
   --help, -h              Show help
 
@@ -383,5 +383,6 @@ git diff | review.claude.md      # Review staged changes
 - If no frontmatter is present, the file is printed as-is
 - Template system uses [LiquidJS](https://liquidjs.com/) - supports conditionals, loops, and filters
 - Use `--dry-run` to audit what will be executed
-- Use `--debug` to write structured logs for troubleshooting
+- Logs are always written to `~/.markdown-agent/logs/<agent-name>/` for debugging
+- Use `--logs` to show the log directory
 - Stdin is wrapped in `<stdin>` tags and prepended to the prompt

@@ -52,7 +52,7 @@ bun run ma task.claude.md
 
 - **`template.ts`** - LiquidJS-powered template engine for variable substitution
 
-- **`logger.ts`** - Structured logging with pino (enable via `--debug` or `DEBUG=ma`)
+- **`logger.ts`** - Structured logging with pino (logs to `~/.markdown-agent/logs/<agent>/`)
 
 ### Command Resolution
 

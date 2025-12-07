@@ -1,107 +1,128 @@
 /**
  * Structured logging for markdown-agent internals
  *
- * Enable via:
- * - DEBUG=ma environment variable
- * - --debug CLI flag
- *
- * Logs are written to:
- * - stderr (human-readable when TTY, JSON otherwise)
- * - ~/.markdown-agent/debug.log (always JSON, rotated)
+ * Logs are always written to ~/.markdown-agent/logs/<agent-name>/
+ * Use `ma --logs` to show the log directory
  */
 
-import pino from "pino";
+import pino, { type Logger } from "pino";
 import { homedir } from "os";
-import { mkdirSync, existsSync } from "fs";
-import { join } from "path";
+import { mkdirSync, existsSync, readdirSync } from "fs";
+import { join, basename, dirname } from "path";
 
-const LOG_DIR = join(homedir(), ".markdown-agent");
-const LOG_FILE = join(LOG_DIR, "debug.log");
+const LOG_BASE_DIR = join(homedir(), ".markdown-agent", "logs");
 
-// Ensure log directory exists
-if (!existsSync(LOG_DIR)) {
+// Ensure base log directory exists
+if (!existsSync(LOG_BASE_DIR)) {
   try {
-    mkdirSync(LOG_DIR, { recursive: true });
+    mkdirSync(LOG_BASE_DIR, { recursive: true });
   } catch {
     // Ignore - logging to file is optional
   }
 }
 
-// Check if debug mode is enabled
-function isDebugEnabled(): boolean {
-  return (
-    process.env.DEBUG === "ma" ||
-    process.env.DEBUG === "markdown-agent" ||
-    process.env.MA_DEBUG === "1" ||
-    process.argv.includes("--debug")
-  );
+/**
+ * Get the log directory path
+ */
+export function getLogDir(): string {
+  return LOG_BASE_DIR;
 }
-
-// Create base logger configuration
-function createLogger() {
-  const enabled = isDebugEnabled();
-
-  if (!enabled) {
-    // Return a no-op logger when debug is disabled
-    return pino({ level: "silent" });
-  }
-
-  // Create transports: stderr + file
-  const targets: pino.TransportTargetOptions[] = [];
-
-  // Always log to file in JSON format
-  targets.push({
-    target: "pino/file",
-    options: { destination: LOG_FILE },
-    level: "debug",
-  });
-
-  // Log to stderr with pretty printing if TTY
-  if (process.stderr.isTTY) {
-    targets.push({
-      target: "pino-pretty",
-      options: {
-        destination: 2, // stderr
-        colorize: true,
-        translateTime: "HH:MM:ss",
-        ignore: "pid,hostname",
-      },
-      level: "debug",
-    });
-  } else {
-    targets.push({
-      target: "pino/file",
-      options: { destination: 2 }, // stderr
-      level: "debug",
-    });
-  }
-
-  return pino(
-    {
-      level: "debug",
-      base: { name: "ma" },
-    },
-    pino.transport({ targets })
-  );
-}
-
-// Export singleton logger
-export const logger = createLogger();
-
-// Convenience child loggers for different modules
-export const parseLogger = logger.child({ module: "parse" });
-export const templateLogger = logger.child({ module: "template" });
-export const commandLogger = logger.child({ module: "command" });
-export const contextLogger = logger.child({ module: "context" });
-export const cacheLogger = logger.child({ module: "cache" });
-export const importLogger = logger.child({ module: "import" });
-
-// Log file location for user reference
-export const LOG_FILE_PATH = LOG_FILE;
 
 /**
- * Check if debug logging is currently enabled
+ * Get log file path for a specific agent
  */
-export function isLoggingEnabled(): boolean {
-  return isDebugEnabled();
+export function getAgentLogPath(agentFile: string): string {
+  const agentName = basename(agentFile, ".md").replace(/\./g, "-");
+  return join(LOG_BASE_DIR, agentName, "debug.log");
+}
+
+/**
+ * List all agent log directories
+ */
+export function listLogDirs(): string[] {
+  try {
+    if (!existsSync(LOG_BASE_DIR)) return [];
+    return readdirSync(LOG_BASE_DIR, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+      .map(d => join(LOG_BASE_DIR, d.name));
+  } catch {
+    return [];
+  }
+}
+
+// Default silent logger until initialized with agent file
+let currentLogger: Logger = pino({ level: "silent" });
+let currentAgentLogPath: string | null = null;
+
+/**
+ * Initialize logger for a specific agent file
+ * Creates a log file at ~/.markdown-agent/logs/<agent-name>/debug.log
+ */
+export function initLogger(agentFile: string): Logger {
+  const agentName = basename(agentFile, ".md").replace(/\./g, "-");
+  const logDir = join(LOG_BASE_DIR, agentName);
+  const logFile = join(logDir, "debug.log");
+
+  // Ensure agent log directory exists
+  if (!existsSync(logDir)) {
+    try {
+      mkdirSync(logDir, { recursive: true });
+    } catch {
+      // Fall back to silent logger
+      return pino({ level: "silent" });
+    }
+  }
+
+  currentAgentLogPath = logFile;
+
+  // Create logger that writes to file only (no stderr spam)
+  currentLogger = pino(
+    {
+      level: "debug",
+      base: { agent: agentName },
+      timestamp: pino.stdTimeFunctions.isoTime,
+    },
+    pino.destination({ dest: logFile, sync: false })
+  );
+
+  return currentLogger;
+}
+
+/**
+ * Get the current logger instance
+ */
+export function getLogger(): Logger {
+  return currentLogger;
+}
+
+/**
+ * Get the current agent's log file path
+ */
+export function getCurrentLogPath(): string | null {
+  return currentAgentLogPath;
+}
+
+// Convenience child loggers - these use the current logger
+export function getParseLogger(): Logger {
+  return currentLogger.child({ module: "parse" });
+}
+
+export function getTemplateLogger(): Logger {
+  return currentLogger.child({ module: "template" });
+}
+
+export function getCommandLogger(): Logger {
+  return currentLogger.child({ module: "command" });
+}
+
+export function getContextLogger(): Logger {
+  return currentLogger.child({ module: "context" });
+}
+
+export function getCacheLogger(): Logger {
+  return currentLogger.child({ module: "cache" });
+}
+
+export function getImportLogger(): Logger {
+  return currentLogger.child({ module: "import" });
 }
