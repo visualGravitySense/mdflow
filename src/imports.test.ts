@@ -1,6 +1,6 @@
 import { test, expect, beforeAll, afterAll } from "bun:test";
-import { expandImports, hasImports } from "./imports";
-import { mkdtemp, rm } from "node:fs/promises";
+import { expandImports, hasImports, toCanonicalPath } from "./imports";
+import { mkdtemp, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -269,4 +269,88 @@ test("expandImports handles glob patterns", async () => {
   // Should be formatted as XML
   expect(result).toContain("<a path=");
   expect(result).toContain("<b path=");
+});
+
+// Canonical path tests
+test("toCanonicalPath resolves symlinks to real path", async () => {
+  // Create a real file
+  const realFile = join(testDir, "real-file.md");
+  await Bun.write(realFile, "Real content");
+
+  // Create a symlink to it
+  const linkFile = join(testDir, "link-to-real.md");
+  await symlink(realFile, linkFile);
+
+  // Both should resolve to the same canonical path
+  const canonicalReal = toCanonicalPath(realFile);
+  const canonicalLink = toCanonicalPath(linkFile);
+
+  expect(canonicalReal).toBe(canonicalLink);
+});
+
+test("toCanonicalPath returns original path for non-existent files", () => {
+  const nonExistent = join(testDir, "does-not-exist.md");
+  const result = toCanonicalPath(nonExistent);
+  expect(result).toBe(nonExistent);
+});
+
+test("toCanonicalPath handles regular files without symlinks", async () => {
+  const regularFile = join(testDir, "regular.md");
+  await Bun.write(regularFile, "Regular content");
+
+  const canonical = toCanonicalPath(regularFile);
+  // For a regular file, canonical path resolves system symlinks too (e.g., /var -> /private/var on macOS)
+  // The canonical path should end with the same relative path
+  expect(canonical.endsWith("regular.md")).toBe(true);
+  // And calling it twice should give the same result
+  expect(toCanonicalPath(canonical)).toBe(canonical);
+});
+
+test("expandImports detects circular import via symlink", async () => {
+  // Create a file that imports itself via a symlink
+  // File A imports symlink-to-A, which points to A -> circular!
+  const fileA = join(testDir, "symlink-cycle-a.md");
+  const symlinkToA = join(testDir, "symlink-to-a.md");
+
+  // Create the symlink first
+  await Bun.write(fileA, "placeholder");
+  await symlink(fileA, symlinkToA);
+
+  // Now update fileA to import via the symlink
+  await Bun.write(fileA, "A imports @./symlink-to-a.md");
+
+  // This should detect the cycle even though paths are different
+  const content = "@./symlink-cycle-a.md";
+  await expect(expandImports(content, testDir)).rejects.toThrow("Circular import detected");
+});
+
+test("expandImports detects indirect circular import via symlink", async () => {
+  // A -> B -> symlink-to-A (which points to A)
+  const fileA = join(testDir, "indirect-a.md");
+  const fileB = join(testDir, "indirect-b.md");
+  const symlinkToA = join(testDir, "indirect-link-to-a.md");
+
+  // Create files and symlink
+  await Bun.write(fileA, "A imports @./indirect-b.md");
+  await Bun.write(fileB, "B imports @./indirect-link-to-a.md");
+  await symlink(fileA, symlinkToA);
+
+  // This should detect the cycle: A -> B -> symlink-to-A (= A)
+  const content = "@./indirect-a.md";
+  await expect(expandImports(content, testDir)).rejects.toThrow("Circular import detected");
+});
+
+test("expandImports allows same content via different files (not symlinks)", async () => {
+  // Two different files with the same content should NOT be a cycle
+  const file1 = join(testDir, "same-content-1.md");
+  const file2 = join(testDir, "same-content-2.md");
+
+  await Bun.write(file1, "Same content");
+  await Bun.write(file2, "Same content");
+
+  const content = "@./same-content-1.md @./same-content-2.md";
+  const result = await expandImports(content, testDir);
+
+  // Should work fine - not a cycle
+  expect(result).toBe("Same content Same content");
 });
