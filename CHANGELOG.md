@@ -1,3 +1,32 @@
+# [2.7.0](https://github.com/johnlindquist/markdown-agent/compare/v2.6.0...v2.7.0) (2025-12-07)
+
+
+### Bug Fixes
+
+* route system/status messages to stderr for clean piping ([e2351a8](https://github.com/johnlindquist/markdown-agent/commit/e2351a8898b105004d7df3990c968ec21396eed0))
+* update dry-run test paths after worktree merge ([fc72c6a](https://github.com/johnlindquist/markdown-agent/commit/fc72c6a7671de0de3f636f06c8371915445e87c8))
+* use canonical paths for cycle detection to handle symlinks ([0cf60ab](https://github.com/johnlindquist/markdown-agent/commit/0cf60ab0547e31efd55214f07b9fd324d01e16aa))
+
+
+### Features
+
+* add --dry-run flag for visual preview mode ([5117372](https://github.com/johnlindquist/markdown-agent/commit/51173728e5f60eef5f7dc682af8309f4dc285cac))
+* add --dry-run flag for visual preview mode ([b68eade](https://github.com/johnlindquist/markdown-agent/commit/b68eadef9cc241baf4c42944b49a952783e12984))
+* add binary file detection to prevent garbage in imports ([8da964a](https://github.com/johnlindquist/markdown-agent/commit/8da964a11265599ecb55d19e1cead96fe67d4dfe))
+* add crash log pointer for better error debugging ([cd37c2d](https://github.com/johnlindquist/markdown-agent/commit/cd37c2d1c3bff4622b3784ba5f5da41a9ca9c414))
+* add EPIPE error handling for graceful pipe closure ([2ecf869](https://github.com/johnlindquist/markdown-agent/commit/2ecf869aa5f92e03269034aa103a269513f52014))
+* add graceful signal handling for SIGINT/SIGTERM ([8dec439](https://github.com/johnlindquist/markdown-agent/commit/8dec4398a8700cb4f081bf499ec75c62598d0ce6))
+* add import feedback logging and 50k token warning ([31ec36c](https://github.com/johnlindquist/markdown-agent/commit/31ec36c38ea1d21607c163416214307a4f811aea))
+* add input size limits for OOM protection ([8a96609](https://github.com/johnlindquist/markdown-agent/commit/8a9660994fd4596dfc82d9214ba7a567c136b847))
+* add interactive agent selector for no-args mode ([6dc646f](https://github.com/johnlindquist/markdown-agent/commit/6dc646fde6f21c68fef4700b7230de4f03a093b6))
+* add interactive agent selector for no-args mode ([8154a45](https://github.com/johnlindquist/markdown-agent/commit/8154a454cefaea5db61f84a5a4e970d8dd4aaf1f))
+* add interactive recovery for missing template variables ([6cf94ec](https://github.com/johnlindquist/markdown-agent/commit/6cf94ec6415c508d0a344c422f666bb7bdd56293))
+* add network timeout and retry support for fetch calls ([5646e98](https://github.com/johnlindquist/markdown-agent/commit/5646e980778d8427c3d10852ed88ed55d202bb92))
+* add pre-flight binary check before command execution ([800a7bd](https://github.com/johnlindquist/markdown-agent/commit/800a7bdbc85e0a9f5b63960631e9a4b48a89dac9))
+* add pre-flight binary check before command execution ([cc6f214](https://github.com/johnlindquist/markdown-agent/commit/cc6f214a609b298255e18195dc1131205c968ef7))
+* extract template variables from Liquid logic tags ([bcf1f27](https://github.com/johnlindquist/markdown-agent/commit/bcf1f276b3719c6a0c977268c507738240b3be7a))
+* show log file path on agent errors ([f8fc9f5](https://github.com/johnlindquist/markdown-agent/commit/f8fc9f5b8aef8067d7bc54222ee69fcdf17f9c16))
+
 # [2.6.0](https://github.com/johnlindquist/markdown-agent/compare/v2.5.0...v2.6.0) (2025-12-07)
 
 
