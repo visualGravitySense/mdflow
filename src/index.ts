@@ -10,6 +10,7 @@ import { loadGlobalConfig, getCommandDefaults, applyDefaults } from "./config";
 import { initLogger, getParseLogger, getTemplateLogger, getCommandLogger, getImportLogger, getCurrentLogPath } from "./logger";
 import { dirname, resolve } from "path";
 import { input } from "@inquirer/prompts";
+import { MAX_INPUT_SIZE, StdinSizeLimitError, exceedsLimit } from "./limits";
 
 /**
  * Print error message with log path pointer to stderr
@@ -23,6 +24,7 @@ function printErrorWithLogPath(message: string, logPath: string | null): void {
 
 /**
  * Read stdin if it's being piped (not a TTY)
+ * Enforces MAX_INPUT_SIZE limit to prevent OOM errors
  */
 async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) {
@@ -30,7 +32,13 @@ async function readStdin(): Promise<string> {
   }
 
   const chunks: Buffer[] = [];
+  let totalBytes = 0;
+
   for await (const chunk of process.stdin) {
+    totalBytes += chunk.length;
+    if (exceedsLimit(totalBytes)) {
+      throw new StdinSizeLimitError(totalBytes);
+    }
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString("utf-8").trim();
