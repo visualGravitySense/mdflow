@@ -1,3 +1,16 @@
+# [2.5.0](https://github.com/johnlindquist/markdown-agent/compare/v2.4.0...v2.5.0) (2025-12-07)
+
+
+### Bug Fixes
+
+* pass unknown CLI flags through to command ([926b426](https://github.com/johnlindquist/markdown-agent/commit/926b426c83fd2c661461e8cb6dfed619f12be448))
+* remove duplicate fileDir declaration ([2be9cd9](https://github.com/johnlindquist/markdown-agent/commit/2be9cd92eb6f76bef9fb2af25a34a8d67127c3d5))
+
+
+### Features
+
+* enhanced import system with globs, line ranges, symbol extraction, and env loading ([2fd6503](https://github.com/johnlindquist/markdown-agent/commit/2fd6503add94a12b04d77e552b549068e10efb85)), closes [./file.ts#InterfaceName](https://github.com/./file.ts/issues/InterfaceName)
+
 # [2.4.0](https://github.com/johnlindquist/markdown-agent/compare/v2.3.0...v2.4.0) (2025-12-07)
 
 
