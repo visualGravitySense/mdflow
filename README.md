@@ -1,10 +1,9 @@
 # markdown-agent
 
 ```bash
-REVIEW.md                        # Run a code review
-COMMIT.md "fix auth bug"         # Generate a commit message
-git diff | EXPLAIN.md            # Pipe anything through AI
-PLAN.md | IMPLEMENT.md           # Chain agents together
+REVIEW.claude.md                 # Run with Claude
+COMMIT.gemini.md "fix auth bug"  # Run with Gemini
+git diff | EXPLAIN.md            # Pipe through any command
 ```
 
 **Your markdown files are now executable AI agents.**
@@ -13,95 +12,80 @@ PLAN.md | IMPLEMENT.md           # Chain agents together
 
 ## What Is This?
 
-Markdown files become first-class CLI commands. Write a prompt in markdown, run it like a script. No wrappers, no prefixes—just the filename.
+Markdown files become first-class CLI commands. Write a prompt in markdown, run it like a script. The command is inferred from the filename or specified in frontmatter.
 
 ```markdown
-# REVIEW.md
+# review.claude.md
 ---
-model: sonnet
+model: opus
 context: ["src/**/*.ts"]
 ---
 Review this code for bugs and suggest improvements.
 ```
 
 ```bash
-REVIEW.md                        # Runs Claude with your codebase
-REVIEW.md --model opus           # Override the model
-REVIEW.md --runner gemini        # Switch to Gemini instead
+review.claude.md                 # Runs: claude --model opus <prompt>
+review.claude.md -- --verbose    # Pass extra flags after --
 ```
 
 ---
 
 ## How It Works
 
-**Three things make markdown executable:**
+### 1. Filename → Command
 
-### 1. Zsh Suffix Aliases (The Magic)
-
-Zsh can associate file extensions with commands. When you type `TASK.md`, zsh sees the `.md` suffix and routes it to `markdown-agent`:
+Name your file `task.COMMAND.md` and the command is inferred:
 
 ```bash
-ma --setup   # One-time setup, adds to ~/.zshrc
+task.claude.md    # Runs claude
+task.gemini.md    # Runs gemini
+task.codex.md     # Runs codex
+task.copilot.md   # Runs copilot
 ```
 
-### 2. A Directory of Agents on PATH
+### 2. Frontmatter → CLI Flags
 
-Put your agents in `~/agents` and add it to PATH. Now they're available everywhere:
-
-```bash
-~/agents/
-├── REVIEW.md      # Code review
-├── COMMIT.md      # Commit messages
-├── EXPLAIN.md     # Explain code
-├── TEST.md        # Generate tests
-└── DEPLOY.md      # Your deploy workflow
-```
-
-```bash
-export PATH="$HOME/agents:$PATH"   # Add to ~/.zshrc
-```
-
-### 3. Frontmatter Links to Models
-
-YAML frontmatter at the top of each file controls which AI runs and how:
+Every YAML key becomes a CLI flag passed to the command:
 
 ```yaml
 ---
-model: sonnet              # Claude Sonnet
-runner: gemini             # Or force Gemini
-context: ["src/**/*.ts"]   # Include files
-before: git diff           # Run command first
-silent: true               # Suppress session metadata
+command: claude          # Explicit command (overrides filename)
+model: opus              # → --model opus
+dangerously-skip-permissions: true  # → --dangerously-skip-permissions
+mcp-config: ./mcp.json   # → --mcp-config ./mcp.json
+add-dir:                 # → --add-dir ./src --add-dir ./tests
+  - ./src
+  - ./tests
 ---
 ```
 
-The same agent can run on **Claude**, **Codex**, **Gemini**, or **Copilot**—just change the model or runner.
+### 3. Body → Prompt
+
+The markdown body is passed as the final argument to the command.
 
 ---
 
-## Why Markdown?
+## Unix Philosophy
 
-| | |
-|---|---|
-| **Readable** | Anyone can understand what an agent does |
-| **Versionable** | Track changes in git like code |
-| **Shareable** | Send a `.md` file—no setup required |
-| **Portable** | Claude today, Gemini tomorrow |
-| **Composable** | Pipe agents like Unix commands |
+markdown-agent embraces the Unix philosophy:
+
+- **No magic mapping** - Frontmatter keys pass directly to the command
+- **Stdin/stdout** - Pipe data in and out
+- **Composable** - Chain agents together
+- **Transparent** - Use `--dry-run` to see exactly what runs
+
+```bash
+# Pipe input
+git diff | ma review.claude.md
+
+# Chain agents
+ma plan.claude.md | ma implement.codex.md
+
+# See what would run
+ma task.claude.md --dry-run
+```
 
 ---
-
-## Key Features
-
-- **Multi-Backend**: Claude, Codex, Gemini, Copilot with auto-detection
-- **Command Hooks**: Run shell commands before/after, pipe outputs
-- **Context Globs**: Include files by pattern (`src/**/*.ts`)
-- **Imports**: Inline files with `@./path.md` or commands with `` !`cmd` ``
-- **Wizard Mode**: Interactive prompts with `inputs:` field
-- **Output Extraction**: Extract JSON, code, or markdown
-- **Result Caching**: Cache expensive LLM calls
-- **Batch Mode**: Run parallel agents with git worktree isolation
-- **Remote Execution**: Run agents from URLs (like `npx`)
 
 ## Installation
 
@@ -114,227 +98,152 @@ bun install && bun link
 ## Quick Start
 
 ```bash
-# Auto-detect backend from model
-ma task.md --model sonnet           # Uses Claude
-ma task.md --model gpt-5            # Uses Codex
-ma task.md --model gemini-2.5-pro   # Uses Gemini
+# Run with filename-inferred command
+ma task.claude.md
+ma task.gemini.md
 
-# Explicit backend selection
-ma task.md --runner claude
-ma task.md --runner codex
-ma task.md --runner gemini
-ma task.md --runner copilot
+# Explicit command override
+ma task.md --command claude
+ma task.md -c gemini
+
+# Pass additional flags to the command
+ma task.claude.md -- --verbose --debug
 
 # Dry-run to see what would execute
-ma task.md --dry-run
-
-# Run from URL
-ma https://example.com/task.md
+ma task.claude.md --dry-run
 ```
 
 > **Note:** Both `ma` and `markdown-agent` commands are available.
 
-## Runner Architecture
+---
 
-markdown-agent uses a **Runner Pattern** to normalize execution across backends. Each runner maps universal frontmatter to backend-specific CLI flags.
+## Command Resolution
 
-| Runner | CLI | God Mode Flag | Notes |
-|--------|-----|---------------|-------|
-| `claude` | `claude` | `--dangerously-skip-permissions` | MCP support |
-| `codex` | `codex` | `--full-auto` | Sandbox modes |
-| `gemini` | `gemini` | `--yolo` | Extensions, approval modes |
-| `copilot` | `copilot` | `--allow-all-tools` | Legacy default |
+Commands are resolved in this priority order:
 
-### Auto-Detection
+1. **CLI flag**: `--command claude` or `-c claude`
+2. **Frontmatter**: `command: claude`
+3. **Filename**: `task.claude.md` → `claude`
 
-When no `runner` is specified, markdown-agent detects the appropriate backend from the model name:
+If no command can be resolved, you'll get an error with instructions.
 
-| Model Pattern | Detected Runner |
-|---------------|-----------------|
-| `claude-*`, `sonnet`, `opus`, `haiku` | `claude` |
-| `gpt-*`, `codex` | `codex` |
-| `gemini-*` | `gemini` |
-| (fallback) | `copilot` |
+---
 
 ## Frontmatter Reference
 
-### Universal Fields
+### System Keys (handled by markdown-agent)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `runner` | string | Backend: `claude`, `codex`, `gemini`, `copilot`, `auto` |
-| `model` | string | AI model name |
-| `silent` | boolean | Suppress session metadata (default: true) |
-| `interactive` | boolean | Force TTY session |
-| `allow-all-tools` | boolean | Maps to each backend's "god mode" |
-| `allow-all-paths` | boolean | Allow any file path |
-| `allow-tool` | string | Allow specific tools |
-| `deny-tool` | string | Deny specific tools |
-| `add-dir` | string \| string[] | Additional directories to include |
-| `before` | string \| string[] | Commands to run before, output prepended |
-| `after` | string \| string[] | Commands to run after, piped with output |
-| `context` | string \| string[] | Glob patterns for files to include |
-| `extract` | string | Output mode: `json`, `code`, `markdown`, `raw` |
-| `cache` | boolean | Enable result caching |
+| `command` | string | Command to execute (e.g., `claude`, `gemini`, `codex`) |
 | `inputs` | InputField[] | Wizard mode interactive prompts |
+| `context` | string \| string[] | Glob patterns for files to include |
+| `cache` | boolean | Enable result caching |
 | `requires` | object | Prerequisites: `bin`, `env` arrays |
 
-### Backend-Specific Escape Hatches
+### All Other Keys → CLI Flags
 
-Each backend has a config object for backend-specific flags:
-
-#### Claude (`claude:`)
+Every other frontmatter key is passed directly to the command:
 
 ```yaml
-claude:
-  dangerously-skip-permissions: true
-  mcp-config: ./postgres-mcp.json
-  allowed-tools: Read,Write
+---
+command: claude
+model: opus                           # → --model opus
+dangerously-skip-permissions: true    # → --dangerously-skip-permissions
+mcp-config: ./mcp.json                # → --mcp-config ./mcp.json
+p: true                               # → -p (single char = short flag)
+---
 ```
 
-#### Codex (`codex:`)
+**Value conversion:**
+- `key: "value"` → `--key value`
+- `key: true` → `--key`
+- `key: false` → (omitted)
+- `key: [a, b]` → `--key a --key b`
 
-```yaml
-codex:
-  sandbox: workspace-write  # read-only | workspace-write | danger-full-access
-  approval: on-failure      # untrusted | on-failure | on-request | never
-  full-auto: true
-  oss: true                 # Local models via Ollama
-  local-provider: ollama
-  cd: ./src
-```
-
-#### Gemini (`gemini:`)
-
-```yaml
-gemini:
-  sandbox: true
-  yolo: true
-  approval-mode: auto_edit  # default | auto_edit | yolo
-  allowed-tools: [tool1, tool2]
-  extensions: [ext1, ext2]
-  resume: latest
-  allowed-mcp-server-names: [server1]
-```
-
-#### Copilot (`copilot:`)
-
-```yaml
-copilot:
-  agent: my-custom-agent
-```
+---
 
 ## Examples
 
 ### Claude with MCP Server
 
 ```markdown
+# db.claude.md
 ---
-runner: claude
-model: sonnet
-silent: true
-claude:
-  mcp-config: ./postgres-mcp.json
+model: opus
+mcp-config: ./postgres-mcp.json
+dangerously-skip-permissions: true
 ---
-
 Analyze the database schema and suggest optimizations.
-```
-
-### Codex Full-Auto Refactor
-
-```markdown
----
-runner: codex
-allow-all-tools: true
-codex:
-  cd: ./src
----
-
-Refactor the authentication middleware to use async/await.
 ```
 
 ### Gemini YOLO Mode
 
 ```markdown
+# refactor.gemini.md
 ---
-runner: gemini
 model: gemini-2.5-pro
-allow-all-tools: true
-gemini:
-  approval-mode: yolo
+yolo: true
 ---
+Refactor the authentication module to use async/await.
+```
 
+### Codex with Sandbox
+
+```markdown
+# analyze.codex.md
+---
+model: o3
+sandbox: workspace-write
+full-auto: true
+---
 Analyze this codebase and suggest improvements.
 ```
 
-### Local LLM via Codex OSS
+### With Context Files
 
 ```markdown
+# review.claude.md
 ---
-runner: codex
-codex:
-  oss: true
-  local-provider: ollama
+model: sonnet
+context:
+  - src/**/*.ts
+  - "!**/*.test.ts"
 ---
-
-Summarize this private document without external APIs.
-```
-
-### With Command Hooks
-
-```markdown
----
-before:
-  - git log --oneline -5
-  - git status
-after:
-  - tee commit-message.txt
----
-
-Generate a commit message based on recent changes.
+Review the TypeScript files above for potential issues.
 ```
 
 ### Wizard Mode with Inputs
 
 ```markdown
+# deploy.claude.md
 ---
 inputs:
-  - name: branch
-    type: text
-    message: "Target branch?"
-    default: main
+  - name: env
+    type: select
+    message: "Deploy to which environment?"
+    choices: ["staging", "production"]
   - name: force
     type: confirm
-    message: "Force push?"
+    message: "Force deploy?"
     default: false
 ---
-
-Create a PR to {{ branch }}{% if force %} with force push{% endif %}.
+Deploy to {{ env }}{% if force %} with --force{% endif %}.
 ```
 
-### Context Globs
-
-```markdown
----
-context:
-  - src/**/*.ts
-  - "!**/*.test.ts"
 ---
 
-Review the TypeScript files above for potential issues.
-```
+## Imports & Command Inlines
 
-### Imports & Command Inlines
+Inline content from other files or command output directly in your prompts.
 
-Inline content from other files or command output directly in your prompts—like Claude Code's `@` imports.
-
-#### File Imports
+### File Imports
 
 Use `@` followed by a path to inline file contents:
 
 ```markdown
 ---
-model: sonnet
+command: claude
 ---
 Follow these coding standards:
 @~/.config/coding-standards.md
@@ -347,15 +256,15 @@ Now review this code:
 - `@./path` - Relative to current markdown file
 - `@/path` - Absolute path
 
-Imports are recursive—imported files can have their own `@` imports (with circular detection).
+Imports are recursive—imported files can have their own `@` imports.
 
-#### Command Inlines
+### Command Inlines
 
 Use `` !`command` `` to execute a shell command and inline its output:
 
 ```markdown
 ---
-model: sonnet
+command: claude
 ---
 Current branch: !`git branch --show-current`
 Recent commits:
@@ -364,519 +273,127 @@ Recent commits:
 Based on the above, suggest what to work on next.
 ```
 
-#### Combined Example
-
-```markdown
 ---
-model: sonnet
----
-# Code Review Request
-
-## Standards
-@~/.config/review-checklist.md
-
-## Current Changes
-!`git diff --cached`
-
-## Files Modified
-!`git diff --cached --name-only`
-
-Review the changes above against the standards.
-```
-
-This is powerful for:
-- **Shared prompts**: Keep common instructions in one file, import everywhere
-- **Dynamic context**: Include git status, environment info, or any command output
-- **Composable agents**: Build complex prompts from reusable pieces
 
 ## CLI Options
 
 ```
-Usage: <file.md> [text] [options] [-- passthrough-args]
+Usage: ma <file.md> [text] [options] [-- passthrough-args]
+       ma --run-batch [options] < manifest.json
+       ma --setup
+
+Arguments:
+  file.md                 Markdown file to execute
+  text                    Additional text appended to the prompt
 
 Options:
-  --runner, -r <runner>   Select backend: claude, codex, copilot, gemini
-  --model, -m <model>     Override AI model
-  --silent, -s            Suppress session metadata (default: on)
-  --no-silent             Show session metadata
-  --interactive, -i       Enable interactive mode
-  --allow-all-tools       Allow all tools without confirmation
-  --allow-all-paths       Allow access to any file path
-  --allow-tool <pattern>  Allow specific tool
-  --deny-tool <pattern>   Deny specific tool
-  --add-dir <dir>         Add directory to allowed list
+  --command, -c <cmd>     Command to execute (e.g., claude, gemini)
   --no-cache              Skip cache and force fresh execution
-  --dry-run               Show what would be executed
+  --dry-run               Show what would be executed without running
   --check                 Validate frontmatter without executing
   --json                  Output validation as JSON (with --check)
+  --verbose, -v           Show debug info
   --setup                 Configure shell to run .md files directly
   --help, -h              Show help
 
+Batch Mode:
+  --run-batch             Read JSON manifest from stdin, dispatch parallel agents
+  --concurrency <n>       Max parallel agents (default: 4)
+
 Passthrough:
-  --                      Everything after -- is passed to the runner
+  --                      Everything after -- is passed to the command
 
 Examples:
-  task.md "focus on error handling"
-  task.md --runner claude --model sonnet
-  task.md --runner codex --model gpt-5
-  task.md --runner gemini --model gemini-2.5-pro
-  task.md -- --verbose --debug
+  ma task.claude.md "focus on error handling"
+  ma task.md --command claude
+  ma commit.gemini.md --verbose
+  ma task.md -- --model opus --debug
 ```
 
-## How It Works
+---
 
-1. **Parse**: Reads markdown file and extracts YAML frontmatter
-2. **Resolve Runner**: Determines backend from CLI flag, frontmatter, or model heuristic
-3. **Prerequisites**: Validates required binaries and environment variables
-4. **Context**: Resolves glob patterns and includes file contents
-5. **Imports**: Expands `@file` imports and `` !`cmd` `` inlines recursively
-6. **Inputs**: Prompts for wizard mode variables if defined
-7. **Before**: Runs `before` commands, captures output in XML tags
-8. **Execute**: Sends prompt to selected runner with mapped flags
-9. **Extract**: Optionally extracts JSON/code/markdown from response
-10. **After**: Pipes response to `after` commands
-11. **Cache**: Stores result if caching enabled
+## Shell Setup
 
-### Stdin Support
+Make `.md` files directly executable:
 
 ```bash
-cat file.txt | ma PROMPT.md
-# Prompt receives: <stdin>file contents</stdin>\n\nPrompt body
+ma --setup   # One-time setup
 ```
 
-### Remote Execution
+Then run agents directly:
 
 ```bash
-ma https://example.com/task.md
-# Downloads, validates, and executes (use --dry-run first!)
+TASK.claude.md                   # Just type the filename
+TASK.claude.md --verbose         # With passthrough args
 ```
 
-## Validation & Repair
+### Manual Setup (zsh)
 
-markdown-agent includes intelligent error handling. When frontmatter validation fails, you get an interactive repair experience instead of a crash.
-
-### Interactive Auto-Repair
-
-When you run an agent with invalid frontmatter, markdown-agent catches the error and offers to fix it:
-
-```
-$ BROKEN.md
-
-┌─────────────────────────────────────────────────────────┐
-│  ❌ Frontmatter Validation Error                        │
-└─────────────────────────────────────────────────────────┘
-
-Errors detected:
-  • allow-tool: Invalid input: expected string, received array
-
-? Would you like to auto-repair this file? (Y/n) Y
-? Select an AI to fix the file:
-  🟣 Claude (Anthropic)
-  🟢 Codex (OpenAI)
-  🔵 Gemini (Google)
-  ⚫ Copilot (GitHub)
-  ❌ Cancel
-
-🔧 Repairing with claude...
-
-✅ File repaired: /path/to/BROKEN.md
-? Run the agent now? (Y/n) Y
-```
-
-The repair flow:
-1. Detects validation errors at runtime
-2. Shows available AI runners on your system
-3. Sends error context + valid schema to chosen AI
-4. Writes the fixed file back
-5. Optionally re-runs the agent immediately
-
-### Manual Validation (CI/Scripts)
-
-For non-interactive use (CI pipelines, scripts), use `--check`:
-
-### Human-Readable Validation
+Add to `~/.zshrc`:
 
 ```bash
-ma --check task.md
-# ✅ task.md is valid
-
-ma --check broken.md
-# ❌ broken.md has errors:
-#    - inputs.0.type: Invalid enum value
+alias -s md='ma'
+export PATH="$HOME/agents:$PATH"  # Your agent library
 ```
 
-### JSON Output for Piping
+---
+
+## Building Your Agent Library
+
+Create a directory of agents and add it to PATH:
+
+```
+~/agents/
+├── review.claude.md     # Code review
+├── commit.gemini.md     # Commit messages
+├── explain.claude.md    # Code explainer
+├── test.codex.md        # Test generator
+└── debug.claude.md      # Debugging helper
+```
 
 ```bash
-ma --check task.md --json
+export PATH="$HOME/agents:$PATH"
 ```
 
-Output:
-```json
-{
-  "valid": false,
-  "file": "task.md",
-  "errors": ["inputs.0.type: Invalid enum value"],
-  "content": "---\ninputs:\n  - name: x\n    type: string\n..."
-}
-```
-
-### The Doctor Agent (Auto-Repair)
-
-Pipe validation output to the DOCTOR agent for automatic fixes:
+Now use them from anywhere:
 
 ```bash
-# Validate, fix, and save in one pipeline
-ma --check broken.md --json | ma instructions/DOCTOR.md > fixed.md
-
-# Preview the fix without saving
-ma --check broken.md --json | ma instructions/DOCTOR.md
+review.claude.md                 # Review current directory
+commit.gemini.md "add auth"      # Generate commit message
+git diff | review.claude.md      # Review staged changes
 ```
 
-The Doctor agent:
-- Reads the JSON validation report from stdin
-- Fixes common schema violations (invalid types, missing fields)
-- Outputs the complete corrected markdown file
-
-### Project-Wide Linting
-
-Validate all markdown files in a directory:
-
-```bash
-# Check all instruction files
-for f in instructions/*.md; do
-  ma --check "$f" || echo "FAILED: $f"
-done
-
-# Fix all broken files
-for f in instructions/*.md; do
-  if ! ma --check "$f" --json > /dev/null 2>&1; then
-    ma --check "$f" --json | ma instructions/DOCTOR.md > "${f}.fixed"
-    mv "${f}.fixed" "$f"
-    echo "Fixed: $f"
-  fi
-done
-```
+---
 
 ## Batch/Swarm Mode
 
-markdown-agent supports parallel agent execution using git worktrees for isolation. A "Planner" agent generates a JSON manifest, which `ma --run-batch` distributes across parallel workers.
+Run parallel agents with git worktree isolation:
+
+```bash
+# Planner outputs JSON manifest, batch mode dispatches workers
+ma PLANNER.md | ma --run-batch
+
+# Control parallelism
+ma --run-batch --concurrency 8 < jobs.json
+```
 
 ### Manifest Format
 
 ```json
 [
   {
-    "agent": "agents/CODER.md",
+    "agent": "agents/coder.claude.md",
     "branch": "feat/api",
-    "vars": { "file": "src/api.ts", "task": "Add REST endpoint" },
-    "model": "sonnet"
-  },
-  {
-    "agent": "agents/TEST.md",
-    "branch": true,
-    "runner": "codex"
+    "vars": { "task": "Add REST endpoint" }
   }
 ]
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `agent` | string | **Required.** Path to agent markdown file |
-| `branch` | string \| boolean | Git branch for isolation. `true` auto-generates name |
-| `vars` | object | Template variables to inject |
-| `model` | string | Override model for this job |
-| `runner` | string | Override runner for this job |
-
-### Usage
-
-```bash
-# Planner outputs JSON manifest, batch mode dispatches workers
-ma PLANNER.md --request "Add user profile" | ma --run-batch
-
-# Control parallelism
-ma --run-batch --concurrency 8 < jobs.json
-
-# Verbose output shows job progress
-ma --run-batch --verbose < jobs.json
-```
-
-### Git Worktree Isolation
-
-When `branch` is specified:
-1. Creates isolated git worktree in `.markdown-agent/worktrees/`
-2. Symlinks `node_modules` from root (no reinstall needed)
-3. Copies `.env` for secrets
-4. Runs agent in isolated directory
-5. Auto-commits changes on success
-6. Cleans up worktree folder (branch preserved for review)
-
-### Example: Planner + Workers
-
-**PLANNER.md** - Generates the manifest:
-
-```markdown
 ---
-model: gpt-5
-extract: json
-silent: true
----
-Request: "{{ request }}"
-
-Plan 3 parallel tasks. Output JSON array with:
-- "agent": path to worker (use "agents/CODER.md")
-- "branch": unique branch name
-- "vars": { "file": target file, "task": specific task }
-```
-
-**agents/CODER.md** - Generic worker:
-
-```markdown
----
-model: claude-sonnet-4-20250514
-allow-tool: write
-silent: true
----
-File: {{ file }}
-Task: {{ task }}
-
-Implement the code changes.
-```
-
-**Run:**
-
-```bash
-ma PLANNER.md --request "Add dark mode" | ma --run-batch
-```
-
-**Output:**
-
-```xml
-<batch_summary total="3" succeeded="3" failed="0">
-  <job index="0" agent="agents/CODER.md" status="success" branch="feat/theme-context" duration_ms="12340">
-    Created ThemeContext provider...
-  </job>
-  <job index="1" agent="agents/CODER.md" status="success" branch="feat/dark-styles" duration_ms="8920">
-    Added dark mode CSS variables...
-  </job>
-  <job index="2" agent="agents/CODER.md" status="success" branch="feat/toggle-ui" duration_ms="6540">
-    Implemented toggle button...
-  </job>
-</batch_summary>
-
-🌿 Worktrees committed. To merge:
-   git merge feat/theme-context feat/dark-styles feat/toggle-ui
-```
-
-## Shell Setup: Treat .md as Agents
-
-### The Power of Zsh Suffix Aliases
-
-Zsh has a hidden superpower: **suffix aliases**. They let you associate file extensions with commands, making any `.md` file directly executable:
-
-```bash
-TASK.md                    # Just type the filename
-TASK.md --model opus       # With options
-TASK.md "focus on tests"   # With arguments
-```
-
-No `./`, no `ma` prefix, no shebangs. The shell sees `.md` and knows what to do.
-
-Run the setup wizard to configure this:
-
-```bash
-ma --setup
-```
-
-### Manual Setup (macOS/Linux)
-
-Add this to `~/.zshrc`:
-
-```bash
-# markdown-agent: Treat .md files as executable agents
-alias -s md='_handle_md'
-_handle_md() {
-  local file="$1"
-  shift
-  # Pass file and any remaining args (--model, --silent, etc.) to handler
-  if command -v ma &>/dev/null; then
-    ma "$file" "$@"
-  else
-    echo "markdown-agent not installed. Install with: bun add -g markdown-agent"
-    echo "Attempting to install now..."
-    if command -v bun &>/dev/null; then
-      bun add -g markdown-agent && ma "$file" "$@"
-    elif command -v npm &>/dev/null; then
-      npm install -g markdown-agent && ma "$file" "$@"
-    else
-      echo "Neither bun nor npm found. Please install markdown-agent manually."
-      return 1
-    fi
-  fi
-}
-```
-
-Then reload your shell: `source ~/.zshrc`
-
-### Bash Users
-
-Bash doesn't have suffix aliases, but you can use a function with tab completion:
-
-```bash
-# Add to ~/.bashrc
-ma() {
-  command ma "$@"
-}
-# Then use: ma TASK.md --model opus
-```
-
-### Windows
-
-Windows has several approaches to achieve similar behavior:
-
-#### Option 1: PowerShell Profile (Recommended)
-
-Add a "command not found" handler to your PowerShell profile that intercepts `.md` files:
-
-```powershell
-# Open profile: code $PROFILE (create if needed)
-
-$ExecutionContext.SessionState.InvokeCommand.CommandNotFoundAction = {
-    param($commandName, $commandLookupEventArgs)
-
-    if ($commandName -match '\.md$' -and (Test-Path $commandName)) {
-        $commandLookupEventArgs.CommandScriptBlock = {
-            param($file) ma $file $args
-        }.GetNewClosure()
-        $commandLookupEventArgs.StopSearch = $true
-    }
-}
-```
-
-Now `TASK.md` runs directly in PowerShell.
-
-#### Option 2: File Association (System-wide)
-
-Make `.md` files executable system-wide using Windows file associations:
-
-```cmd
-:: Run as Administrator
-assoc .md=MarkdownAgent
-ftype MarkdownAgent=ma "%1" %*
-
-:: Add .MD to executable extensions (restart terminal after)
-setx PATHEXT "%PATHEXT%;.MD"
-```
-
-#### Option 3: WSL (Full zsh experience)
-
-For the complete zsh suffix alias experience, use Windows Subsystem for Linux:
-
-```bash
-# In WSL, run ma --setup as normal
-wsl
-ma --setup
-```
-
-#### Option 4: Wrapper Scripts
-
-Create a `.cmd` file alongside your agent:
-
-```cmd
-:: TASK.cmd - runs TASK.md
-@echo off
-ma "%~dp0TASK.md" %*
-```
-
-Then just type `TASK` from anywhere on PATH.
-
-## Building Your Agent Library
-
-The real power of markdown-agent comes from building a personal library of agents. Create a directory, add it to your PATH, and your agents become first-class CLI tools.
-
-### Recommended Structure
-
-```
-~/agents/
-├── REVIEW.md          # Code review agent
-├── COMMIT.md          # Commit message generator
-├── REFACTOR.md        # Refactoring assistant
-├── EXPLAIN.md         # Code explainer
-├── TEST.md            # Test generator
-├── DEBUG.md           # Debugging helper
-├── PLAN.md            # Implementation planner
-└── project-specific/
-    ├── DEPLOY.md      # Your deployment workflow
-    └── MIGRATE.md     # Database migration helper
-```
-
-### Add to PATH
-
-Add this to your `~/.zshrc` (after running `ma --setup`):
-
-```bash
-# Make agents available everywhere
-export PATH="$HOME/agents:$PATH"
-```
-
-### Usage From Anywhere
-
-Once on PATH, agents work like any CLI command:
-
-```bash
-# From any directory
-REVIEW.md                           # Review current directory
-COMMIT.md "add user auth"           # Generate commit message
-EXPLAIN.md src/complex-function.ts  # Explain specific file
-
-# Pipe data through agents
-git diff | REVIEW.md                # Review staged changes
-cat error.log | DEBUG.md            # Debug from logs
-
-# Chain agents together
-PLAN.md "add dark mode" | COMMIT.md # Plan then commit
-```
-
-### Example Starter Agents
-
-**REVIEW.md** - Quick code review:
-```markdown
----
-model: sonnet
-context: ["**/*.ts", "!node_modules"]
-silent: true
----
-Review this code for bugs, security issues, and improvements.
-Focus on the most critical issues first.
-```
-
-**COMMIT.md** - Generate commit messages:
-```markdown
----
-model: haiku
-before: git diff --cached
-silent: true
----
-Generate a conventional commit message for these changes.
-Be concise. Follow the format: type(scope): description
-```
-
-**EXPLAIN.md** - Explain code:
-```markdown
----
-model: sonnet
-silent: true
----
-Explain this code clearly and concisely.
-Focus on: what it does, why it's designed this way, and any gotchas.
-
-{{ $1 }}
-```
 
 ## Notes
 
 - If no frontmatter is present, the file is printed as-is
-- `before` command output is wrapped in XML tags named after the command
-- The first `after` command receives AI output via stdin
-- Default `silent: true` suppresses session metadata output
-- Use `--dry-run` to audit remote scripts before execution
+- Template variables (`{{ var }}`) are substituted before execution
+- Use `--dry-run` to audit what will be executed
+- Stdin is wrapped in `<stdin>` tags and prepended to the prompt

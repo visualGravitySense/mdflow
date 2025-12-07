@@ -1,11 +1,8 @@
 ---
-# Runner will be auto-detected from model name
-# claude-* / sonnet / opus / haiku -> claude
-# gpt-* / codex -> codex
-# gemini-* -> gemini
-# fallback -> copilot
+# Command is required - either via frontmatter, CLI, or filename
+# This file uses explicit command in frontmatter
+command: claude
 model: sonnet
-silent: true
 ---
 
-Say "Hello from auto-detected runner!" and nothing else.
+Say "Hello!" and nothing else.

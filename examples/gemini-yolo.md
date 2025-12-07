@@ -1,9 +1,8 @@
 ---
-runner: gemini
-model: gemini-3-pro-preview
-silent: true
-gemini:
-  approval-mode: yolo
+# Note: This file could be named yolo.gemini.md to auto-infer command
+command: gemini
+model: gemini-2.5-pro
+yolo: true
 ---
 
-Say "Hello from Gemini!" and nothing else.
+Say "Hello from Gemini in YOLO mode!" and nothing else.

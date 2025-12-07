@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-**markdown-agent** (`ma`) is a CLI tool that executes AI agents defined as markdown files. It parses YAML frontmatter for configuration and routes prompts to multiple AI backends (harnesses): Claude, Codex, Copilot, and Gemini.
+**markdown-agent** (`ma`) is a CLI tool that executes AI agents defined as markdown files. It parses YAML frontmatter for configuration and passes keys directly as CLI flags to the specified command (claude, codex, gemini, copilot, or any other CLI tool).
 
 ## Commands
 
@@ -16,13 +16,13 @@ bun test --bail=1
 bun test src/cli.test.ts
 
 # Run a specific test by name
-bun test --test-name-pattern "parses model"
+bun test --test-name-pattern "parses command"
 
 # Execute the CLI directly
-bun run src/index.ts TASK.md
+bun run src/index.ts task.claude.md
 
 # Or using the alias
-bun run ma TASK.md
+bun run ma task.claude.md
 ```
 
 ## Architecture
@@ -31,40 +31,53 @@ bun run ma TASK.md
 ```
 .md file → parseFrontmatter() → mergeFrontmatter(cli overrides)
         → expandImports() → substituteTemplateVars()
-        → resolveHarness() → harness.run()
-        → extractOutput() → runAfterCommands()
+        → resolveCommand() → buildArgs() → runCommand()
 ```
 
 ### Key Modules
 
-- **`harnesses/`** - Multi-backend abstraction layer
-  - `types.ts`: `Harness` interface and `BaseHarness` abstract class
-  - `factory.ts`: Harness detection (CLI > frontmatter > model heuristic > fallback)
-  - `claude.ts`, `codex.ts`, `copilot.ts`, `gemini.ts`: Backend implementations
+- **`command.ts`** - Command resolution and execution
+  - `parseCommandFromFilename()`: Infers command from `task.claude.md` → `claude`
+  - `resolveCommand()`: Priority: CLI > frontmatter > filename
+  - `buildArgs()`: Converts frontmatter to CLI flags
+  - `runCommand()`: Spawns the command with prompt as argument
 
 - **`types.ts`** - Core TypeScript interfaces
-  - `AgentFrontmatter`: Universal frontmatter schema with harness-specific escape hatches
-  - Harness-specific configs: `ClaudeConfig`, `CodexConfig`, `CopilotConfig`, `GeminiConfig`
+  - `AgentFrontmatter`: Simple interface with system keys + passthrough
+  - System keys: `command`, `inputs`, `context`, `cache`, `requires`
 
-- **`schema.ts`** - Zod validation for frontmatter
+- **`schema.ts`** - Minimal Zod validation (system keys only, rest passthrough)
 
 - **`imports.ts`** - File imports (`@./path.md`) and command inlines (`` !`cmd` ``)
 
 - **`batch.ts`** - Swarm execution via `--run-batch` with git worktree isolation
 
-### Frontmatter Key Hierarchy
+### Command Resolution
 
-The system uses universal keys that map to all backends, with deprecated aliases for backward compatibility:
-- `approval: "yolo"` → maps to `--dangerously-skip-permissions` (Claude), `--yolo` (Gemini), etc.
-- `tools: { allow: [...], deny: [...] }` → preferred over `allow-tool`/`deny-tool`
-- `session: { resume: true }` → preferred over `resume: true` or `continue: true`
+Commands are resolved in priority order:
+1. CLI flag: `--command claude` or `-c claude`
+2. Frontmatter: `command: claude`
+3. Filename: `task.claude.md` → `claude`
 
-Harness-specific escape hatches (`claude:`, `codex:`, `copilot:`, `gemini:`) pass through any flags not yet universally mapped.
+### Frontmatter → CLI Flags
+
+All non-system frontmatter keys are passed directly to the command:
+
+```yaml
+---
+command: claude
+model: opus                  # → --model opus
+dangerously-skip-permissions: true  # → --dangerously-skip-permissions
+add-dir:                     # → --add-dir ./src --add-dir ./tests
+  - ./src
+  - ./tests
+---
+```
 
 ### Template System
 
 - `{{ variable }}` syntax in markdown body
-- CLI args: `--varname value` (unknown flags become template vars)
+- CLI args: `--varname value` (unknown flags become template vars, not passed to command)
 - `inputs:` frontmatter for wizard mode (interactive prompts)
 
 ## Testing Patterns
@@ -75,9 +88,9 @@ Tests use Bun's test runner with `describe`/`it` blocks:
 import { describe, it, expect } from "bun:test";
 
 describe("parseCliArgs", () => {
-  it("parses model flag", () => {
-    const result = parseCliArgs(["node", "script", "file.md", "--model", "gpt-4"]);
-    expect(result.overrides.model).toBe("gpt-4");
+  it("parses command flag", () => {
+    const result = parseCliArgs(["node", "script", "file.md", "--command", "claude"]);
+    expect(result.command).toBe("claude");
   });
 });
 ```
