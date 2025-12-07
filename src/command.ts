@@ -13,6 +13,7 @@ const SYSTEM_KEYS = new Set([
   "context",
   "requires",
   "cache",
+  "$1",  // Map first positional (body) to a flag
 ]);
 
 /**
@@ -122,6 +123,8 @@ export interface RunContext {
   prompt: string;
   /** Whether to capture output */
   captureOutput: boolean;
+  /** Map $1 (body) to a flag instead of positional (e.g., "prompt" → --prompt <body>) */
+  positionalMap?: string;
 }
 
 export interface RunResult {
@@ -133,10 +136,19 @@ export interface RunResult {
  * Execute command with prompt as argument
  */
 export async function runCommand(ctx: RunContext): Promise<RunResult> {
-  const { command, args, prompt, captureOutput } = ctx;
+  const { command, args, prompt, captureOutput, positionalMap } = ctx;
 
-  // Pass prompt as final positional argument
-  const proc = Bun.spawn([command, ...args, prompt], {
+  // Build final command args
+  let finalArgs: string[];
+  if (positionalMap) {
+    // $1: prompt → --prompt <body>
+    finalArgs = [...args, toFlag(positionalMap), prompt];
+  } else {
+    // Pass prompt as final positional argument
+    finalArgs = [...args, prompt];
+  }
+
+  const proc = Bun.spawn([command, ...finalArgs], {
     stdout: captureOutput ? "pipe" : "inherit",
     stderr: "inherit",
     stdin: "inherit",

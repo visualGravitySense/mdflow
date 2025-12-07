@@ -89,6 +89,7 @@ describe("buildArgs", () => {
       context: "*.ts",
       requires: { bin: ["git"] },
       cache: true,
+      "$1": "prompt",  // $1 is a system key
       model: "opus",
     }, new Set());
     expect(result).toEqual(["--model", "opus"]);

@@ -371,6 +371,7 @@ async function main() {
         args,
         prompt: finalBody,
         captureOutput: useCache,
+        positionalMap: frontmatter["$1"] as string | undefined,
       });
       if (runResult.exitCode === 0 && runResult.output) {
         await writeCache(cacheKey, runResult.output);
@@ -385,6 +386,7 @@ async function main() {
       args,
       prompt: finalBody,
       captureOutput: false,
+      positionalMap: frontmatter["$1"] as string | undefined,
     });
   }
 
