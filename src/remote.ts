@@ -61,7 +61,7 @@ export async function fetchRemote(url: string): Promise<RemoteResult> {
 
   try {
     const rawUrl = toRawUrl(url);
-    console.log(`Fetching: ${rawUrl}`);
+    console.error(`Fetching: ${rawUrl}`);
 
     const response = await fetch(rawUrl, {
       headers: {
@@ -88,7 +88,7 @@ export async function fetchRemote(url: string): Promise<RemoteResult> {
     // Write content to temp file
     await Bun.write(localPath, content);
 
-    console.log(`Saved to: ${localPath}`);
+    console.error(`Saved to: ${localPath}`);
 
     return { success: true, localPath, isRemote: true };
   } catch (err) {

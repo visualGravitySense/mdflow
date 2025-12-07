@@ -80,42 +80,42 @@ async function appendToConfig(configPath: string): Promise<void> {
  * Interactive setup wizard
  */
 export async function runSetup(): Promise<void> {
-  console.log("\n📝 markdown-agent Shell Setup\n");
-  console.log("This will configure your shell to treat .md files as executable agents.");
-  console.log("After setup, you can run: ./TASK.md instead of: ma TASK.md\n");
+  console.error("\n📝 markdown-agent Shell Setup\n");
+  console.error("This will configure your shell to treat .md files as executable agents.");
+  console.error("After setup, you can run: ./TASK.md instead of: ma TASK.md\n");
 
   const configs = findShellConfigs();
   const existingConfigs = configs.filter((c) => c.exists);
 
   if (existingConfigs.length === 0) {
-    console.log("No shell config files found. Creating ~/.zshrc...\n");
+    console.error("No shell config files found. Creating ~/.zshrc...\n");
     existingConfigs.push({ name: ".zshrc", path: join(homedir(), ".zshrc"), exists: false });
   }
 
   // Show the snippet that will be added
-  console.log("The following will be added to your shell config:\n");
-  console.log("─".repeat(60));
-  console.log(SHELL_SNIPPET);
-  console.log("─".repeat(60));
-  console.log();
+  console.error("The following will be added to your shell config:\n");
+  console.error("─".repeat(60));
+  console.error(SHELL_SNIPPET);
+  console.error("─".repeat(60));
+  console.error();
 
   // Check for existing installations
   for (const config of existingConfigs) {
     if (await isAlreadyInstalled(config.path)) {
-      console.log(`✅ Already installed in ${config.name}`);
-      console.log("\nTo apply changes, run: source ~/" + config.name);
+      console.error(`✅ Already installed in ${config.name}`);
+      console.error("\nTo apply changes, run: source ~/" + config.name);
       return;
     }
   }
 
   // Show available config files
-  console.log("Available shell config files:");
+  console.error("Available shell config files:");
   existingConfigs.forEach((c, i) => {
-    console.log(`  ${i + 1}. ${c.name} ${c.exists ? "" : "(will create)"}`);
+    console.error(`  ${i + 1}. ${c.name} ${c.exists ? "" : "(will create)"}`);
   });
-  console.log(`  ${existingConfigs.length + 1}. Copy to clipboard (manual install)`);
-  console.log(`  ${existingConfigs.length + 2}. Cancel`);
-  console.log();
+  console.error(`  ${existingConfigs.length + 1}. Copy to clipboard (manual install)`);
+  console.error(`  ${existingConfigs.length + 2}. Cancel`);
+  console.error();
 
   // Prompt for selection
   process.stdout.write("Select option [1]: ");
@@ -136,7 +136,7 @@ export async function runSetup(): Promise<void> {
   const choice = parseInt(input) || 1;
 
   if (choice === existingConfigs.length + 2) {
-    console.log("Setup cancelled.");
+    console.error("Setup cancelled.");
     return;
   }
 
@@ -148,22 +148,22 @@ export async function runSetup(): Promise<void> {
     proc.stdin.write(SHELL_SNIPPET);
     proc.stdin.end();
     await proc.exited;
-    console.log("\n✅ Copied to clipboard!");
-    console.log("Paste into your shell config file and run: source ~/.zshrc");
+    console.error("\n✅ Copied to clipboard!");
+    console.error("Paste into your shell config file and run: source ~/.zshrc");
     return;
   }
 
   const selectedConfig = existingConfigs[choice - 1];
   if (!selectedConfig) {
-    console.log("Invalid selection.");
+    console.error("Invalid selection.");
     return;
   }
 
   // Append to selected config
   await appendToConfig(selectedConfig.path);
-  console.log(`\n✅ Added to ${selectedConfig.name}`);
-  console.log(`\nTo apply changes now, run:\n  source ${selectedConfig.path}`);
-  console.log("\nThen try:\n  ./examples/auto-detect.md --dry-run");
+  console.error(`\n✅ Added to ${selectedConfig.name}`);
+  console.error(`\nTo apply changes now, run:\n  source ${selectedConfig.path}`);
+  console.error("\nThen try:\n  ./examples/auto-detect.md --dry-run");
 }
 
 /**
