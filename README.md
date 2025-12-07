@@ -296,7 +296,6 @@ Based on the above, suggest what to work on next.
 
 ```
 Usage: ma <file.md> [text] [options] [-- passthrough-args]
-       ma --run-batch [options] < manifest.json
        ma --setup
 
 Arguments:
@@ -310,12 +309,9 @@ Options:
   --check                 Validate frontmatter without executing
   --json                  Output validation as JSON (with --check)
   --verbose, -v           Show debug info
+  --debug                 Write structured logs to ~/.markdown-agent/debug.log
   --setup                 Configure shell to run .md files directly
   --help, -h              Show help
-
-Batch Mode:
-  --run-batch             Read JSON manifest from stdin, dispatch parallel agents
-  --concurrency <n>       Max parallel agents (default: 4)
 
 Passthrough:
   --                      Everything after -- is passed to the command
@@ -382,35 +378,10 @@ git diff | review.claude.md      # Review staged changes
 
 ---
 
-## Batch/Swarm Mode
-
-Run parallel agents with git worktree isolation:
-
-```bash
-# Planner outputs JSON manifest, batch mode dispatches workers
-ma PLANNER.md | ma --run-batch
-
-# Control parallelism
-ma --run-batch --concurrency 8 < jobs.json
-```
-
-### Manifest Format
-
-```json
-[
-  {
-    "agent": "agents/coder.claude.md",
-    "branch": "feat/api",
-    "vars": { "task": "Add REST endpoint" }
-  }
-]
-```
-
----
-
 ## Notes
 
 - If no frontmatter is present, the file is printed as-is
-- Template variables (`{{ var }}`) are substituted before execution
+- Template system uses [LiquidJS](https://liquidjs.com/) - supports conditionals, loops, and filters
 - Use `--dry-run` to audit what will be executed
+- Use `--debug` to write structured logs for troubleshooting
 - Stdin is wrapped in `<stdin>` tags and prepended to the prompt

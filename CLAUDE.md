@@ -44,7 +44,7 @@ bun run ma task.claude.md
 
 - **`types.ts`** - Core TypeScript interfaces
   - `AgentFrontmatter`: Simple interface with system keys + passthrough
-  - System keys: `command`, `inputs`, `context`, `cache`, `requires`
+  - System keys: `command`, `$1`, `inputs`, `context`, `cache`, `requires`
 
 - **`schema.ts`** - Minimal Zod validation (system keys only, rest passthrough)
 
