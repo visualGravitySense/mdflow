@@ -1,4 +1,5 @@
 import { resolve, dirname, relative, basename } from "path";
+import { realpathSync } from "fs";
 import { homedir } from "os";
 import { Glob } from "bun";
 import ignore from "ignore";
@@ -49,6 +50,23 @@ function resolveImportPath(importPath: string, currentFileDir: string): string {
 
   // Relative paths resolve from current file's directory
   return resolve(currentFileDir, expanded);
+}
+
+/**
+ * Resolve a path to its canonical form (resolving symlinks)
+ * This ensures that symlinks to the same file are detected as identical
+ * for cycle detection purposes.
+ *
+ * @param filePath - The path to resolve
+ * @returns The canonical (real) path, or the original path if resolution fails
+ */
+export function toCanonicalPath(filePath: string): string {
+  try {
+    return realpathSync(filePath);
+  } catch {
+    // File might not exist yet, or other error - return original path
+    return filePath;
+  }
 }
 
 /**
@@ -487,16 +505,19 @@ async function processFileImport(
   // Regular file import
   const resolvedPath = resolveImportPath(importPath, currentFileDir);
 
-  // Check for circular imports
-  if (stack.has(resolvedPath)) {
-    const cycle = [...stack, resolvedPath].join(" -> ");
-    throw new Error(`Circular import detected: ${cycle}`);
-  }
-
-  // Check if file exists
+  // Check if file exists first (needed for canonical path resolution)
   const file = Bun.file(resolvedPath);
   if (!await file.exists()) {
     throw new Error(`Import not found: ${importPath} (resolved to ${resolvedPath})`);
+  }
+
+  // Resolve to canonical path for cycle detection (handles symlinks)
+  const canonicalPath = toCanonicalPath(resolvedPath);
+
+  // Check for circular imports using canonical path
+  if (stack.has(canonicalPath)) {
+    const cycle = [...stack, canonicalPath].join(" -> ");
+    throw new Error(`Circular import detected: ${cycle}`);
   }
 
   if (verbose) {
@@ -507,8 +528,9 @@ async function processFileImport(
   const content = await file.text();
 
   // Recursively process imports in the imported file
+  // Use canonical path in stack for consistent cycle detection
   const newStack = new Set(stack);
-  newStack.add(resolvedPath);
+  newStack.add(canonicalPath);
 
   return expandImports(content, dirname(resolvedPath), newStack, verbose);
 }
