@@ -1,0 +1,237 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`Snapshot Tests Simple markdown (no imports) preserves simple markdown content 1`] = `
+"This is a simple markdown file with no imports.
+
+It has multiple paragraphs and should be preserved exactly.
+
+- Bullet point 1
+- Bullet point 2
+- Bullet point 3"
+`;
+
+exports[`Snapshot Tests File imports expands single file import 1`] = `
+"Here is imported content:
+
+This is helper content that will be imported.
+
+
+End of prompt."
+`;
+
+exports[`Snapshot Tests File imports expands nested imports recursively 1`] = `
+"Start of nested import test.
+
+Outer content starts here.
+
+** Inner nested content **
+
+
+Outer content ends here.
+
+
+End of nested import test."
+`;
+
+exports[`Snapshot Tests Line range imports extracts specific line ranges 1`] = `
+"Extracting lines 3-7 from the lines file:
+
+Line 3: Getting Started
+Line 4: Installation
+Line 5: Configuration
+Line 6: Basic Usage
+Line 7: Advanced Features
+
+That's the relevant section."
+`;
+
+exports[`Snapshot Tests Symbol extraction extracts TypeScript symbols 1`] = `
+"Here is the UserProfile interface:
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+And here is the formatUser function:
+
+export function formatUser(user: UserProfile): string {
+  return \`\${user.name} <\${user.email}>\`;
+}
+
+Use these to implement the feature."
+`;
+
+exports[`Snapshot Tests Glob imports expands glob patterns to XML format 1`] = `
+"Here are all TypeScript files in the glob-test directory:
+
+<a path="imports/glob-test/a.ts">
+// File a.ts
+export const A = "alpha";
+
+</a>
+
+<b path="imports/glob-test/b.ts">
+// File b.ts
+export const B = "beta";
+
+</b>
+
+Process these files accordingly."
+`;
+
+exports[`Snapshot Tests Command substitution executes and inlines command output 1`] = `
+"Current date context:
+
+Test command output
+
+Please proceed with the task."
+`;
+
+exports[`Snapshot Tests Template variables substitutes template variables 1`] = `
+"Please refactor the file at src/main.ts.
+
+
+
+
+Apply changes directly to the files.
+"
+`;
+
+exports[`Snapshot Tests Template variables handles conditional blocks (verbose enabled) 1`] = `
+"Please analyze the file at src/main.ts.
+
+
+Be verbose in your output and explain each step.
+
+
+
+Apply changes directly to the files.
+"
+`;
+
+exports[`Snapshot Tests Template variables handles conditional blocks (dry_run enabled) 1`] = `
+"Please update the file at src/main.ts.
+
+
+
+
+This is a dry run - do not make actual changes.
+"
+`;
+
+exports[`Snapshot Tests Complex combined scenarios handles multiple import types with templates 1`] = `
+"# Feature Implementation: UserAuthentication
+
+## Context
+
+This document describes the implementation of the UserAuthentication feature.
+
+### Type Definitions
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+### Configuration
+
+export const DEFAULT_CONFIG = {
+  apiUrl: "https://api.example.com",
+  timeout: 5000,
+  retries: 3,
+};
+
+### Helper Content
+
+This is helper content that will be imported.
+
+
+## Requirements
+
+
+Running in lenient mode - some validations may be skipped.
+
+
+## Reference Lines
+
+Here are lines 4-6 from the reference doc:
+
+Line 4: Installation
+Line 5: Configuration
+Line 6: Basic Usage
+
+## Instructions
+
+Please implement the UserAuthentication feature following these guidelines."
+`;
+
+exports[`Snapshot Tests Complex combined scenarios handles multiple import types with strict mode 1`] = `
+"# Feature Implementation: DataValidation
+
+## Context
+
+This document describes the implementation of the DataValidation feature.
+
+### Type Definitions
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+### Configuration
+
+export const DEFAULT_CONFIG = {
+  apiUrl: "https://api.example.com",
+  timeout: 5000,
+  retries: 3,
+};
+
+### Helper Content
+
+This is helper content that will be imported.
+
+
+## Requirements
+
+
+Running in strict mode - all validations will be enforced.
+
+
+## Reference Lines
+
+Here are lines 4-6 from the reference doc:
+
+Line 4: Installation
+Line 5: Configuration
+Line 6: Basic Usage
+
+## Instructions
+
+Please implement the DataValidation feature following these guidelines."
+`;
+
+exports[`URL imports (mocked) fetches and inlines markdown URL 1`] = `
+"Documentation:
+
+# Documentation
+
+This is mocked documentation content.
+
+End of docs."
+`;
+
+exports[`URL imports (mocked) fetches and inlines JSON URL 1`] = `
+"Config:
+
+{"version":"1.0.0","features":["auth","cache"]}
+
+Use this config."
+`;

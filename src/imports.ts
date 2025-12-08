@@ -44,6 +44,17 @@ type ImportStack = Set<string>;
 export type ResolvedImportsTracker = string[];
 
 /**
+ * Import context for passing runtime dependencies
+ * Used to inject environment variables and track resolved imports
+ */
+export interface ImportContext {
+  /** Environment variables (defaults to process.env) */
+  env?: Record<string, string | undefined>;
+  /** Track resolved imports for ExecutionPlan */
+  resolvedImports?: ResolvedImportsTracker;
+}
+
+/**
  * File extensions that are known to be binary
  * These are checked first before content inspection
  */
@@ -604,8 +615,9 @@ async function processFileImport(
   currentFileDir: string,
   stack: ImportStack,
   verbose: boolean,
-  resolvedImports?: ResolvedImportsTracker
+  importCtx?: ImportContext
 ): Promise<string> {
+  const resolvedImports = importCtx?.resolvedImports;
   // Check for glob pattern first
   if (isGlobPatternInternal(importPath)) {
     return processGlobImport(importPath, currentFileDir, verbose);
@@ -719,7 +731,7 @@ async function processFileImport(
   const newStack = new Set(stack);
   newStack.add(canonicalPath);
 
-  return expandImports(content, dirname(resolvedPath), newStack, verbose, resolvedImports);
+  return expandImports(content, dirname(resolvedPath), newStack, verbose, importCtx);
 }
 
 /**
@@ -728,17 +740,21 @@ async function processFileImport(
 async function processCommandInline(
   command: string,
   currentFileDir: string,
-  verbose: boolean
+  verbose: boolean,
+  importCtx?: ImportContext
 ): Promise<string> {
   // Always log command execution to stderr for visibility
   console.error(`[imports] Executing: ${command}`);
+
+  // Use importCtx.env if provided, otherwise fall back to process.env
+  const env = importCtx?.env ?? process.env;
 
   try {
     const result = Bun.spawnSync(["sh", "-c", command], {
       cwd: currentFileDir,
       stdout: "pipe",
       stderr: "pipe",
-      env: process.env,  // Explicitly inherit process.env (including frontmatter env vars)
+      env: env as Record<string, string>,
     });
 
     const stdout = result.stdout.toString().trim();
@@ -774,8 +790,13 @@ export async function expandImports(
   currentFileDir: string,
   stack: ImportStack = new Set(),
   verbose: boolean = false,
-  resolvedImports?: ResolvedImportsTracker
+  contextOrTracker?: ImportContext | ResolvedImportsTracker
 ): Promise<string> {
+  // Normalize the 5th parameter - can be either ImportContext or ResolvedImportsTracker (for backward compat)
+  const importCtx: ImportContext = Array.isArray(contextOrTracker)
+    ? { resolvedImports: contextOrTracker }
+    : (contextOrTracker ?? {});
+  const resolvedImports = importCtx.resolvedImports;
   let result = content;
 
   // Process file imports first
@@ -796,7 +817,7 @@ export async function expandImports(
 
   // Process file imports in reverse order to preserve indices
   for (const imp of fileImports.reverse()) {
-    const replacement = await processFileImport(imp.path, currentFileDir, stack, verbose, resolvedImports);
+    const replacement = await processFileImport(imp.path, currentFileDir, stack, verbose, importCtx);
     result = result.slice(0, imp.index) + replacement + result.slice(imp.index + imp.full.length);
   }
 
@@ -836,7 +857,7 @@ export async function expandImports(
 
   // Process command inlines in reverse order to preserve indices
   for (const cmd of commandInlines.reverse()) {
-    const replacement = await processCommandInline(cmd.command, currentFileDir, verbose);
+    const replacement = await processCommandInline(cmd.command, currentFileDir, verbose, importCtx);
     result = result.slice(0, cmd.index) + replacement + result.slice(cmd.index + cmd.full.length);
   }
 

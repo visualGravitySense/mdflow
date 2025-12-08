@@ -2,13 +2,20 @@
  * Global and project-level configuration for markdown-agent
  * Loads defaults from ~/.markdown-agent/config.yaml
  * Cascades with project configs: global → git root → CWD (later overrides earlier)
+ *
+ * This module provides both:
+ * 1. Legacy cached config functions (for backward compatibility)
+ * 2. RunContext-aware config loading (no global state)
  */
 
 import { homedir } from "os";
 import { join, dirname, resolve } from "path";
 import { existsSync, statSync } from "fs";
 import yaml from "js-yaml";
-import type { AgentFrontmatter } from "./types";
+import type { AgentFrontmatter, GlobalConfig, CommandDefaults, RunContext } from "./types";
+
+// Re-export types for convenience
+export type { GlobalConfig, CommandDefaults } from "./types";
 
 const CONFIG_DIR = join(homedir(), ".markdown-agent");
 const CONFIG_FILE = join(CONFIG_DIR, "config.yaml");
@@ -17,34 +24,9 @@ const CONFIG_FILE = join(CONFIG_DIR, "config.yaml");
 const PROJECT_CONFIG_NAMES = ["ma.config.yaml", ".markdown-agent.yaml", ".markdown-agent.json"];
 
 /**
- * Command-specific defaults
- * Keys starting with $ are positional mappings
- * Other keys are default flags
- */
-export interface CommandDefaults {
-  /** Map positional arg N to a flag (e.g., $1: "prompt" → --prompt <body>) */
-  [key: `$${number}`]: string;
-  /**
-   * Context window limit override (in tokens)
-   * Overrides model-based defaults for token limit calculations
-   */
-  context_window?: number;
-  /** Default flag values */
-  [key: string]: unknown;
-}
-
-/**
- * Global config structure
- */
-export interface GlobalConfig {
-  /** Default settings per command */
-  commands?: Record<string, CommandDefaults>;
-}
-
-/**
  * Built-in defaults (used when no config file exists)
  */
-const BUILTIN_DEFAULTS: GlobalConfig = {
+export const BUILTIN_DEFAULTS: GlobalConfig = {
   commands: {
     copilot: {
       $1: "prompt",  // Map body to --prompt for copilot
@@ -277,4 +259,102 @@ export function clearConfigCache(): void {
  */
 export function clearProjectConfigCache(): void {
   cachedProjectConfig = null;
+}
+
+// ============================================================================
+// RunContext-aware config functions (no global state)
+// ============================================================================
+
+/**
+ * Deep merge two configs (second takes priority)
+ * Exported for use with RunContext
+ */
+export function mergeConfigs(base: GlobalConfig, override: GlobalConfig): GlobalConfig {
+  const result: GlobalConfig = { ...base };
+
+  if (override.commands) {
+    result.commands = result.commands ? { ...result.commands } : {};
+    for (const [cmd, defaults] of Object.entries(override.commands)) {
+      result.commands[cmd] = {
+        ...(result.commands[cmd] || {}),
+        ...defaults,
+      };
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Load global config from ~/.markdown-agent/config.yaml (no caching)
+ * This is the RunContext-compatible version that doesn't use global state
+ */
+export async function loadGlobalConfigFresh(): Promise<GlobalConfig> {
+  try {
+    const file = Bun.file(CONFIG_FILE);
+    if (await file.exists()) {
+      const content = await file.text();
+      const parsed = yaml.load(content) as GlobalConfig;
+      // Merge with built-in defaults (user config takes priority)
+      return mergeConfigs(BUILTIN_DEFAULTS, parsed);
+    }
+  } catch {
+    // Fall back to built-in defaults on parse error
+  }
+  return BUILTIN_DEFAULTS;
+}
+
+/**
+ * Load project-level config with cascade: git root → CWD (no caching)
+ * This is the RunContext-compatible version that doesn't use global state
+ */
+export async function loadProjectConfigFresh(cwd: string): Promise<GlobalConfig> {
+  const resolvedCwd = resolve(cwd);
+  let projectConfig: GlobalConfig = {};
+
+  // 1. Load from git root (if different from CWD)
+  const gitRoot = findGitRoot(resolvedCwd);
+  if (gitRoot && gitRoot !== resolvedCwd) {
+    const gitRootConfigFile = findProjectConfigFile(gitRoot);
+    if (gitRootConfigFile) {
+      const gitRootConfig = await loadConfigFile(gitRootConfigFile);
+      if (gitRootConfig) {
+        projectConfig = gitRootConfig;
+      }
+    }
+  }
+
+  // 2. Load from CWD (overrides git root)
+  const cwdConfigFile = findProjectConfigFile(resolvedCwd);
+  if (cwdConfigFile) {
+    const cwdConfig = await loadConfigFile(cwdConfigFile);
+    if (cwdConfig) {
+      projectConfig = mergeConfigs(projectConfig, cwdConfig);
+    }
+  }
+
+  return projectConfig;
+}
+
+/**
+ * Load fully merged config: built-in defaults → global → git root → CWD (no caching)
+ * This is the RunContext-compatible version that doesn't use global state
+ */
+export async function loadFullConfigFresh(cwd: string): Promise<GlobalConfig> {
+  const globalConfig = await loadGlobalConfigFresh();
+  const projectConfig = await loadProjectConfigFresh(cwd);
+
+  // Merge: global → project (project takes priority)
+  return mergeConfigs(globalConfig, projectConfig);
+}
+
+/**
+ * Get defaults for a specific command from a config object
+ * This is the pure function version that works with RunContext
+ */
+export function getCommandDefaultsFromConfig(
+  config: GlobalConfig,
+  command: string
+): CommandDefaults | undefined {
+  return config.commands?.[command];
 }

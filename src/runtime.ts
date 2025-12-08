@@ -622,3 +622,19 @@ export function createRuntime(): AgentRuntime {
 
 // Re-export ExecutionPlan for convenience
 export type { ExecutionPlan } from "./types";
+
+// Re-export streams utilities for testability
+export {
+  createDefaultStreams,
+  createTestStreams,
+  stringToStream,
+  createCaptureStream,
+  readStream,
+  readStdinFromStreams,
+  isInteractive,
+  writeStdout,
+  writeStderr,
+} from "./streams";
+
+// Re-export IOStreams type
+export type { IOStreams } from "./types";

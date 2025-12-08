@@ -1,3 +1,17 @@
+/**
+ * IO Streams abstraction for testable stdin/stdout handling
+ */
+export interface IOStreams {
+  /** Input stream (null if not piped/TTY mode) */
+  stdin: NodeJS.ReadableStream | null;
+  /** Output stream for command results */
+  stdout: NodeJS.WritableStream;
+  /** Error stream for status messages */
+  stderr: NodeJS.WritableStream;
+  /** Whether stdin is from a TTY (interactive mode) */
+  isTTY: boolean;
+}
+
 /** Frontmatter configuration - keys become CLI flags */
 export interface AgentFrontmatter {
   /** Named positional arguments to consume from CLI and map to template vars */
@@ -105,4 +119,80 @@ export interface ExecutionPlan {
   templateVars: Record<string, string>;
   /** Positional mappings from frontmatter ($1, $2, etc.) */
   positionalMappings: Record<number, string>;
+}
+
+/**
+ * Logger interface for structured logging
+ * Compatible with pino Logger but allows for custom implementations
+ */
+export interface Logger {
+  debug(obj: object, msg?: string): void;
+  debug(msg: string): void;
+  info(obj: object, msg?: string): void;
+  info(msg: string): void;
+  warn(obj: object, msg?: string): void;
+  warn(msg: string): void;
+  error(obj: object, msg?: string): void;
+  error(msg: string): void;
+  child(bindings: Record<string, unknown>): Logger;
+  level: string;
+}
+
+/**
+ * Global configuration structure for markdown-agent
+ */
+export interface GlobalConfig {
+  /** Default settings per command */
+  commands?: Record<string, CommandDefaults>;
+}
+
+/**
+ * Command-specific defaults
+ * Keys starting with $ are positional mappings
+ * Other keys are default flags
+ */
+export interface CommandDefaults {
+  /** Map positional arg N to a flag (e.g., $1: "prompt" → --prompt <body>) */
+  [key: `$${number}`]: string;
+  /**
+   * Context window limit override (in tokens)
+   * Overrides model-based defaults for token limit calculations
+   */
+  context_window?: number;
+  /** Default flag values */
+  [key: string]: unknown;
+}
+
+/**
+ * RunContext - Encapsulates all runtime dependencies
+ *
+ * This replaces global state (module-level singletons) with an explicit
+ * context object that can be passed through the call chain. This enables:
+ * - Complete test isolation (parallel tests don't interfere)
+ * - Custom loggers/configs per test
+ * - Easier mocking and dependency injection
+ */
+export interface RunContext {
+  /** Logger instance for this run */
+  logger: Logger;
+  /** Global configuration */
+  config: GlobalConfig;
+  /** Environment variables (replaces process.env access) */
+  env: Record<string, string | undefined>;
+  /** Current working directory (replaces process.cwd()) */
+  cwd: string;
+}
+
+/**
+ * Options for creating a RunContext
+ */
+export interface RunContextOptions {
+  /** Custom logger (defaults to silent logger) */
+  logger?: Logger;
+  /** Custom config (defaults to built-in defaults) */
+  config?: GlobalConfig;
+  /** Custom environment (defaults to process.env) */
+  env?: Record<string, string | undefined>;
+  /** Custom working directory (defaults to process.cwd()) */
+  cwd?: string;
 }
