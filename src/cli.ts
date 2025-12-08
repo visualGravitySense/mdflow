@@ -3,6 +3,7 @@ import { Glob } from "bun";
 import { basename, join } from "path";
 import { realpathSync } from "fs";
 import { homedir } from "os";
+import { EarlyExitRequest, UserCancelledError } from "./errors";
 
 export interface CliArgs {
   filePath: string;
@@ -270,7 +271,7 @@ export async function showInteractiveSelector(files: AgentFile[]): Promise<strin
 export async function handleMaCommands(args: CliArgs): Promise<HandleMaCommandsResult> {
   if (args.help) {
     printHelp();
-    process.exit(0);
+    throw new EarlyExitRequest();
   }
 
   if (args.logs) {
@@ -287,13 +288,13 @@ export async function handleMaCommands(args: CliArgs): Promise<HandleMaCommandsR
         console.log(`  ${dir}/`);
       }
     }
-    process.exit(0);
+    throw new EarlyExitRequest();
   }
 
   if (args.setup) {
     const { runSetup } = await import("./setup");
     await runSetup();
-    process.exit(0);
+    throw new EarlyExitRequest();
   }
 
   // No file and no flags - show interactive picker if TTY
@@ -305,8 +306,8 @@ export async function handleMaCommands(args: CliArgs): Promise<HandleMaCommandsR
         if (selected) {
           return { handled: true, selectedFile: selected };
         }
-        // User cancelled - exit gracefully
-        process.exit(0);
+        // User cancelled - throw error for clean exit
+        throw new UserCancelledError("No agent selected");
       }
     }
   }

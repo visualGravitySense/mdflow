@@ -13,6 +13,17 @@ import { dirname, resolve } from "path";
 import { input } from "@inquirer/prompts";
 import { MAX_INPUT_SIZE, StdinSizeLimitError, exceedsLimit } from "./limits";
 import { countTokens } from "./tokenizer";
+import {
+  MarkdownAgentError,
+  EarlyExitRequest,
+  UserCancelledError,
+  FileNotFoundError,
+  NetworkError,
+  SecurityError,
+  ConfigurationError,
+  TemplateError,
+  ImportError,
+} from "./errors";
 
 /**
  * Print error message with log path pointer to stderr
@@ -79,7 +90,7 @@ async function main() {
         // No file selected and no command handled - show usage
         console.error("Usage: ma <file.md> [flags for command]");
         console.error("Run 'ma --help' for more info");
-        process.exit(1);
+        throw new ConfigurationError("No agent file specified", 1);
       }
     }
 
@@ -92,8 +103,7 @@ async function main() {
     if (isRemoteUrl(filePath)) {
       const remoteResult = await fetchRemote(filePath);
       if (!remoteResult.success) {
-        console.error(`Failed to fetch remote file: ${remoteResult.error}`);
-        process.exit(1);
+        throw new NetworkError(`Failed to fetch remote file: ${remoteResult.error}`);
       }
       localFilePath = remoteResult.localPath!;
       isRemote = true;
@@ -122,8 +132,7 @@ async function main() {
     const file = Bun.file(localFilePath);
 
     if (!await file.exists()) {
-      console.error(`File not found: ${localFilePath}`);
-      process.exit(1);
+      throw new FileNotFoundError(`File not found: ${localFilePath}`);
     }
 
     // Load .env files from the markdown file's directory
@@ -183,8 +192,7 @@ async function main() {
       }
     } catch (err) {
       getCommandLogger().error({ error: (err as Error).message }, "Command resolution failed");
-      printErrorWithLogPath(`Agent failed: ${(err as Error).message}`, logPath);
-      process.exit(1);
+      throw err; // Re-throw to be caught by outer handler
     }
 
     // Load global config and apply command defaults
@@ -263,8 +271,8 @@ async function main() {
         getImportLogger().debug({ originalLength: rawBody.length, expandedLength: expandedBody.length }, "Imports expanded");
       } catch (err) {
         getImportLogger().error({ error: (err as Error).message }, "Import expansion failed");
-        printErrorWithLogPath(`Import error: ${(err as Error).message}`, logPath);
-        process.exit(1);
+        // Wrap in ImportError with consistent prefix for error handling
+        throw new ImportError(`Import error: ${(err as Error).message}`);
       }
     }
 
@@ -280,10 +288,11 @@ async function main() {
           templateVars[v] = await input({ message: `${v}:` });
         }
       } else {
-        // Only exit if piping/non-interactive
-        printErrorWithLogPath(`Missing template variables: ${missingVars.join(", ")}`, logPath);
-        console.error(`Use 'args:' in frontmatter to map CLI arguments to variables`);
-        process.exit(1);
+        // Only throw if piping/non-interactive
+        throw new TemplateError(
+          `Missing template variables: ${missingVars.join(", ")}. ` +
+          `Use 'args:' in frontmatter to map CLI arguments to variables`
+        );
       }
     }
 
@@ -299,7 +308,7 @@ async function main() {
         resolveCommand(localFilePath);
       } catch {
         console.log(content);
-        process.exit(0);
+        throw new EarlyExitRequest();
       }
     }
 
@@ -346,7 +355,7 @@ async function main() {
       }
 
       logger.info({ dryRun: true }, "Dry run completed");
-      process.exit(0);
+      throw new EarlyExitRequest();
     }
 
     // TOFU (Trust on First Use) check for remote URLs
@@ -357,20 +366,20 @@ async function main() {
       if (!trusted) {
         // Check if we're in a TTY for interactive prompt
         if (!process.stdin.isTTY) {
-          console.error(`\nUntrusted remote domain: ${domain}`);
-          console.error(`Use --trust flag to bypass this check in non-interactive mode.`);
-          console.error(`Or run interactively to add the domain to known_hosts.\n`);
           await cleanupRemote(localFilePath);
-          process.exit(1);
+          throw new SecurityError(
+            `Untrusted remote domain: ${domain}. ` +
+            `Use --trust flag to bypass this check in non-interactive mode, ` +
+            `or run interactively to add the domain to known_hosts.`
+          );
         }
 
         // Interactive prompt for trust
         const trustResult = await promptForTrust(filePath, command, baseFrontmatter, rawBody);
 
         if (!trustResult.approved) {
-          console.error("\nExecution cancelled by user.\n");
           await cleanupRemote(localFilePath);
-          process.exit(1);
+          throw new UserCancelledError("Execution cancelled by user");
         }
 
         if (trustResult.rememberDomain) {
@@ -409,7 +418,24 @@ async function main() {
     process.exit(runResult.exitCode);
 
   } catch (err) {
-    // Catch any unhandled errors and show log path
+    // Handle typed errors appropriately
+    if (err instanceof EarlyExitRequest) {
+      // Clean exit requested (--help, --logs, --setup, --dry-run, etc.)
+      process.exit(err.code);
+    }
+
+    if (err instanceof UserCancelledError) {
+      // User cancelled - exit quietly with code 0 (or 1 if appropriate)
+      process.exit(err.code);
+    }
+
+    if (err instanceof MarkdownAgentError) {
+      // Known error type - show message with log path
+      printErrorWithLogPath(`Agent failed: ${err.message}`, logPath);
+      process.exit(err.code);
+    }
+
+    // Unknown error - show message with log path
     printErrorWithLogPath(`Agent failed: ${(err as Error).message}`, logPath);
     process.exit(1);
   }

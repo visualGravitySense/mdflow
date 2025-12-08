@@ -20,6 +20,13 @@ import { initLogger, getParseLogger, getTemplateLogger, getCommandLogger, getImp
 import type { AgentFrontmatter, ExecutionPlan } from "./types";
 import type { RunResult } from "./command";
 import { countTokens } from "./tokenizer";
+import {
+  FileNotFoundError,
+  NetworkError,
+  ImportError,
+  TemplateError,
+  HookError,
+} from "./errors";
 
 /**
  * Run a lifecycle hook command and capture its output
@@ -51,7 +58,7 @@ async function runHookCommand(
 
   if (exitCode !== 0) {
     const errorMsg = stderr.trim() || `Command exited with code ${exitCode}`;
-    throw new Error(`Hook command failed: ${errorMsg}`);
+    throw new HookError(`Hook command failed: ${errorMsg}`);
   }
 
   return stdout;
@@ -176,7 +183,7 @@ export class AgentRuntime {
     if (isRemoteUrl(source)) {
       const remoteResult = await fetchRemote(source);
       if (!remoteResult.success) {
-        throw new Error(`Failed to fetch remote file: ${remoteResult.error}`);
+        throw new NetworkError(`Failed to fetch remote file: ${remoteResult.error}`);
       }
       localPath = remoteResult.localPath!;
       isRemote = true;
@@ -189,7 +196,7 @@ export class AgentRuntime {
     const file = Bun.file(localPath);
 
     if (!await file.exists()) {
-      throw new Error(`File not found: ${localPath}`);
+      throw new FileNotFoundError(`File not found: ${localPath}`);
     }
 
     const content = await file.text();
@@ -261,7 +268,7 @@ export class AgentRuntime {
         getImportLogger().debug({ originalLength: rawBody.length, expandedLength: expandedBody.length }, "Imports expanded");
       } catch (err) {
         getImportLogger().error({ error: (err as Error).message }, "Import expansion failed");
-        throw new Error(`Import error: ${(err as Error).message}`);
+        throw new ImportError(`Import error: ${(err as Error).message}`);
       }
     }
 
@@ -276,7 +283,7 @@ export class AgentRuntime {
         getCommandLogger().debug({ outputLength: preHookOutput.length }, "Pre hook completed");
       } catch (err) {
         getCommandLogger().error({ error: (err as Error).message }, "Pre hook failed");
-        throw new Error(`Pre hook failed: ${(err as Error).message}`);
+        throw new HookError(`Pre hook failed: ${(err as Error).message}`);
       }
     }
 
@@ -371,7 +378,7 @@ export class AgentRuntime {
         }
       } else {
         // Non-interactive - throw error
-        throw new Error(
+        throw new TemplateError(
           `Missing template variables: ${missingVars.join(", ")}. ` +
           `Use 'args:' in frontmatter to map CLI arguments to variables`
         );
