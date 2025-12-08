@@ -1,3 +1,10 @@
+# [2.10.0](https://github.com/johnlindquist/markdown-agent/compare/v2.9.0...v2.10.0) (2025-12-08)
+
+
+### Features
+
+* add ma create command for interactive agent creation ([0cf60d1](https://github.com/johnlindquist/markdown-agent/commit/0cf60d1c5afebc6e586a170e9a9edb86eff82bed))
+
 # [2.9.0](https://github.com/johnlindquist/markdown-agent/compare/v2.8.0...v2.9.0) (2025-12-08)
 
 
