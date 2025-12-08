@@ -25,6 +25,9 @@ import { countTokens, getContextLimit } from "./tokenizer";
 /** Track files being processed to detect circular imports */
 type ImportStack = Set<string>;
 
+/** Track resolved import paths for introspection */
+export type ResolvedImportsTracker = string[];
+
 /**
  * File extensions that are known to be binary
  * These are checked first before content inspection
@@ -585,7 +588,8 @@ async function processFileImport(
   importPath: string,
   currentFileDir: string,
   stack: ImportStack,
-  verbose: boolean
+  verbose: boolean,
+  resolvedImports?: ResolvedImportsTracker
 ): Promise<string> {
   // Check for glob pattern first
   if (isGlobPattern(importPath)) {
@@ -617,6 +621,10 @@ async function processFileImport(
     }
 
     const content = await file.text();
+    // Track the resolved import
+    if (resolvedImports) {
+      resolvedImports.push(importPath);
+    }
     return extractSymbol(content, symbolParsed.symbol);
   }
 
@@ -645,6 +653,10 @@ async function processFileImport(
     }
 
     const content = await file.text();
+    // Track the resolved import
+    if (resolvedImports) {
+      resolvedImports.push(importPath);
+    }
     return extractLines(content, rangeParsed.start, rangeParsed.end);
   }
 
@@ -679,6 +691,11 @@ async function processFileImport(
   // Always log file loading to stderr for visibility
   console.error(`[imports] Loading: ${importPath}`);
 
+  // Track the resolved import
+  if (resolvedImports) {
+    resolvedImports.push(importPath);
+  }
+
   // Read file content
   const content = await file.text();
 
@@ -687,7 +704,7 @@ async function processFileImport(
   const newStack = new Set(stack);
   newStack.add(canonicalPath);
 
-  return expandImports(content, dirname(resolvedPath), newStack, verbose);
+  return expandImports(content, dirname(resolvedPath), newStack, verbose, resolvedImports);
 }
 
 /**
@@ -729,13 +746,15 @@ async function processCommandInline(
  * @param currentFileDir - Directory of the current file (for relative imports)
  * @param stack - Set of files already being processed (for circular detection)
  * @param verbose - Whether to log import/command activity
+ * @param resolvedImports - Optional array to collect resolved import paths for introspection
  * @returns Content with all imports and commands expanded
  */
 export async function expandImports(
   content: string,
   currentFileDir: string,
   stack: ImportStack = new Set(),
-  verbose: boolean = false
+  verbose: boolean = false,
+  resolvedImports?: ResolvedImportsTracker
 ): Promise<string> {
   let result = content;
 
@@ -757,7 +776,7 @@ export async function expandImports(
 
   // Process file imports in reverse order to preserve indices
   for (const imp of fileImports.reverse()) {
-    const replacement = await processFileImport(imp.path, currentFileDir, stack, verbose);
+    const replacement = await processFileImport(imp.path, currentFileDir, stack, verbose, resolvedImports);
     result = result.slice(0, imp.index) + replacement + result.slice(imp.index + imp.full.length);
   }
 
@@ -776,6 +795,10 @@ export async function expandImports(
   // Process URL imports in reverse order to preserve indices
   for (const imp of urlImports.reverse()) {
     const replacement = await processUrlImport(imp.url, verbose);
+    // Track URL imports
+    if (resolvedImports) {
+      resolvedImports.push(imp.url);
+    }
     result = result.slice(0, imp.index) + replacement + result.slice(imp.index + imp.full.length);
   }
 

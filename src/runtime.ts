@@ -13,12 +13,13 @@ import { parseFrontmatter } from "./parse";
 import { substituteTemplateVars, extractTemplateVars } from "./template";
 import { isRemoteUrl, fetchRemote, cleanupRemote } from "./remote";
 import { resolveCommand, buildArgs, runCommand, extractPositionalMappings, extractEnvVars, killCurrentChildProcess } from "./command";
-import { expandImports, hasImports } from "./imports";
+import { expandImports, hasImports, type ResolvedImportsTracker } from "./imports";
 import { loadEnvFiles } from "./env";
 import { loadGlobalConfig, getCommandDefaults, applyDefaults } from "./config";
 import { initLogger, getParseLogger, getTemplateLogger, getCommandLogger, getImportLogger, getCurrentLogPath } from "./logger";
-import type { AgentFrontmatter } from "./types";
+import type { AgentFrontmatter, ExecutionPlan } from "./types";
 import type { RunResult } from "./command";
+import { countTokens } from "./tokenizer";
 
 /**
  * Run a lifecycle hook command and capture its output
@@ -92,6 +93,8 @@ export interface AgentContext {
   preHookOutput?: string;
   /** Post/after hook command to run after execution */
   postHookCommand?: string;
+  /** List of resolved imports (files and URLs) */
+  resolvedImports: string[];
 }
 
 /**
@@ -126,6 +129,11 @@ export interface RuntimeOptions {
   templateVars?: Record<string, string>;
   /** Prompt for missing variables (requires TTY) */
   promptForMissing?: (varName: string) => Promise<string>;
+  /**
+   * Return structured ExecutionPlan without logging to console
+   * When true, dry-run returns ExecutionPlan instead of logging
+   */
+  returnPlan?: boolean;
 }
 
 /**
@@ -140,6 +148,8 @@ export interface RuntimeResult {
   logPath: string | null;
   /** Whether this was a dry run */
   dryRun: boolean;
+  /** Structured execution plan (when returnPlan is true or dryRun is true) */
+  plan?: ExecutionPlan;
 }
 
 /**
@@ -242,11 +252,12 @@ export class AgentRuntime {
 
     // Expand @file imports and !`command` inlines
     let expandedBody = rawBody;
+    const resolvedImports: ResolvedImportsTracker = [];
 
     if (hasImports(rawBody)) {
       try {
         getImportLogger().debug({ directory: resolved.directory }, "Expanding imports");
-        expandedBody = await expandImports(rawBody, resolved.directory, new Set());
+        expandedBody = await expandImports(rawBody, resolved.directory, new Set(), false, resolvedImports);
         getImportLogger().debug({ originalLength: rawBody.length, expandedLength: expandedBody.length }, "Imports expanded");
       } catch (err) {
         getImportLogger().error({ error: (err as Error).message }, "Import expansion failed");
@@ -281,6 +292,7 @@ export class AgentRuntime {
       envVars,
       preHookOutput,
       postHookCommand,
+      resolvedImports,
     };
   }
 
@@ -469,20 +481,45 @@ export class AgentRuntime {
           finalBody = `<stdin>\n${options.stdinContent}\n</stdin>\n\n${finalBody}`;
         }
 
-        console.log("═══════════════════════════════════════════════════════════");
-        console.log("DRY RUN - Command will NOT be executed");
-        console.log("═══════════════════════════════════════════════════════════\n");
+        // Use real token counting instead of approximation
+        const estimatedTokens = countTokens(finalBody);
 
-        console.log("Command:");
-        console.log(`   ${context.command} ${processed.args.join(" ")}\n`);
+        // Convert positionalMappings Map to plain object for ExecutionPlan
+        const positionalMappingsObj: Record<number, string> = {};
+        for (const [key, value] of processed.positionalMappings.entries()) {
+          positionalMappingsObj[key] = value;
+        }
 
-        console.log("Final Prompt:");
-        console.log("───────────────────────────────────────────────────────────");
-        console.log(finalBody);
-        console.log("───────────────────────────────────────────────────────────\n");
+        // Build the structured execution plan
+        const plan: ExecutionPlan = {
+          type: "dry-run",
+          finalPrompt: finalBody,
+          command: context.command,
+          args: processed.args,
+          env: context.envVars || {},
+          estimatedTokens,
+          frontmatter: context.frontmatter,
+          resolvedImports: context.resolvedImports,
+          templateVars: processed.templateVars,
+          positionalMappings: positionalMappingsObj,
+        };
 
-        const estimatedTokens = Math.ceil(finalBody.length / 4);
-        console.log(`Estimated tokens: ~${estimatedTokens.toLocaleString()}`);
+        // Only log to console if not in returnPlan mode (backward compatibility for CLI)
+        if (!options.returnPlan) {
+          console.log("═══════════════════════════════════════════════════════════");
+          console.log("DRY RUN - Command will NOT be executed");
+          console.log("═══════════════════════════════════════════════════════════\n");
+
+          console.log("Command:");
+          console.log(`   ${context.command} ${processed.args.join(" ")}\n`);
+
+          console.log("Final Prompt:");
+          console.log("───────────────────────────────────────────────────────────");
+          console.log(finalBody);
+          console.log("───────────────────────────────────────────────────────────\n");
+
+          console.log(`Estimated tokens: ~${estimatedTokens.toLocaleString()}`);
+        }
 
         await this.cleanup();
 
@@ -490,6 +527,7 @@ export class AgentRuntime {
           exitCode: 0,
           logPath: this.logPath,
           dryRun: true,
+          plan,
         };
       }
 
@@ -574,3 +612,6 @@ export class AgentRuntime {
 export function createRuntime(): AgentRuntime {
   return new AgentRuntime();
 }
+
+// Re-export ExecutionPlan for convenience
+export type { ExecutionPlan } from "./types";

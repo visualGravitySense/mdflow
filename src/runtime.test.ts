@@ -15,6 +15,7 @@ import { tmpdir } from "os";
 import {
   AgentRuntime,
   createRuntime,
+  type ExecutionPlan,
 } from "./runtime";
 import { clearConfigCache } from "./config";
 
@@ -495,6 +496,213 @@ Body content`);
       const resolved = await runtime.resolve(filePath);
 
       await expect(runtime.buildContext(resolved)).rejects.toThrow("Import not found");
+    });
+  });
+
+  describe("Structured Dry Run (ExecutionPlan)", () => {
+    it("returns ExecutionPlan with finalPrompt when dryRun and returnPlan are true", async () => {
+      const filePath = join(tempDir, "plan.claude.md");
+      await writeFile(filePath, `---
+model: sonnet
+temperature: 0.5
+---
+Hello world prompt`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, { dryRun: true, returnPlan: true });
+
+      expect(result.dryRun).toBe(true);
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.type).toBe("dry-run");
+      expect(result.plan!.finalPrompt).toBe("Hello world prompt");
+      expect(result.plan!.command).toBe("claude");
+      expect(result.plan!.args).toContain("--model");
+      expect(result.plan!.args).toContain("sonnet");
+    });
+
+    it("includes resolved imports in ExecutionPlan", async () => {
+      const includedFile = join(tempDir, "include.txt");
+      await writeFile(includedFile, "Included content here");
+
+      const mainFile = join(tempDir, "main.claude.md");
+      await writeFile(mainFile, `---\n---\nBefore import\n@./include.txt\nAfter import`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(mainFile, { dryRun: true, returnPlan: true });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.resolvedImports).toContain("./include.txt");
+      expect(result.plan!.finalPrompt).toContain("Included content here");
+      expect(result.plan!.finalPrompt).toContain("Before import");
+      expect(result.plan!.finalPrompt).toContain("After import");
+    });
+
+    it("includes template variables in ExecutionPlan", async () => {
+      const filePath = join(tempDir, "template.claude.md");
+      await writeFile(filePath, `---
+args:
+  - name
+  - action
+---
+Hello {{ name }}, please {{ action }}`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, {
+        dryRun: true,
+        returnPlan: true,
+        passthroughArgs: ["World", "test"],
+      });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.templateVars).toEqual({ name: "World", action: "test" });
+      expect(result.plan!.finalPrompt).toBe("Hello World, please test");
+    });
+
+    it("provides accurate token estimation", async () => {
+      const filePath = join(tempDir, "tokens.claude.md");
+      // Create a prompt with known content
+      const prompt = "This is a test prompt with some words to count tokens.";
+      await writeFile(filePath, `---\n---\n${prompt}`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, { dryRun: true, returnPlan: true });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.estimatedTokens).toBeGreaterThan(0);
+      // Token count should be reasonable (roughly 1 token per 4 chars, but varies)
+      expect(result.plan!.estimatedTokens).toBeLessThan(prompt.length);
+    });
+
+    it("includes environment variables in ExecutionPlan", async () => {
+      const filePath = join(tempDir, "env.claude.md");
+      await writeFile(filePath, `---
+env:
+  API_KEY: test-key
+  DEBUG: "true"
+---
+Body content`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, { dryRun: true, returnPlan: true });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.env).toEqual({
+        API_KEY: "test-key",
+        DEBUG: "true",
+      });
+    });
+
+    it("includes positional mappings in ExecutionPlan", async () => {
+      const filePath = join(tempDir, "positional.claude.md");
+      await writeFile(filePath, `---
+$1: prompt
+$2: context
+---
+Body`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, { dryRun: true, returnPlan: true });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.positionalMappings).toEqual({ 1: "prompt", 2: "context" });
+    });
+
+    it("includes full frontmatter in ExecutionPlan", async () => {
+      const filePath = join(tempDir, "frontmatter.claude.md");
+      await writeFile(filePath, `---
+model: opus
+verbose: true
+max-tokens: 1000
+---
+Body`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, { dryRun: true, returnPlan: true });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.frontmatter.model).toBe("opus");
+      expect(result.plan!.frontmatter.verbose).toBe(true);
+      expect(result.plan!.frontmatter["max-tokens"]).toBe(1000);
+    });
+
+    it("includes stdin content in finalPrompt", async () => {
+      const filePath = join(tempDir, "stdin.claude.md");
+      await writeFile(filePath, `---\n---\nProcess this input:`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, {
+        dryRun: true,
+        returnPlan: true,
+        stdinContent: "stdin data here",
+      });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.finalPrompt).toContain("<stdin>");
+      expect(result.plan!.finalPrompt).toContain("stdin data here");
+      expect(result.plan!.finalPrompt).toContain("</stdin>");
+      expect(result.plan!.finalPrompt).toContain("Process this input:");
+    });
+
+    it("tracks multiple nested imports", async () => {
+      const file1 = join(tempDir, "level1.txt");
+      const file2 = join(tempDir, "level2.txt");
+      await writeFile(file2, "Level 2 content");
+      await writeFile(file1, "Level 1 start\n@./level2.txt\nLevel 1 end");
+
+      const mainFile = join(tempDir, "multi.claude.md");
+      await writeFile(mainFile, `---\n---\nMain\n@./level1.txt\nEnd`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(mainFile, { dryRun: true, returnPlan: true });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.resolvedImports).toContain("./level1.txt");
+      expect(result.plan!.resolvedImports).toContain("./level2.txt");
+      expect(result.plan!.finalPrompt).toContain("Main");
+      expect(result.plan!.finalPrompt).toContain("Level 1 start");
+      expect(result.plan!.finalPrompt).toContain("Level 2 content");
+      expect(result.plan!.finalPrompt).toContain("Level 1 end");
+      expect(result.plan!.finalPrompt).toContain("End");
+    });
+
+    it("includes pre-hook output in finalPrompt", async () => {
+      const filePath = join(tempDir, "prehook.claude.md");
+      await writeFile(filePath, `---
+pre: echo "HOOK OUTPUT"
+---
+Body content`);
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, { dryRun: true, returnPlan: true });
+
+      expect(result.plan).toBeDefined();
+      expect(result.plan!.finalPrompt).toContain("HOOK OUTPUT");
+      expect(result.plan!.finalPrompt).toContain("Body content");
+      // Hook output should come before body
+      const hookIndex = result.plan!.finalPrompt.indexOf("HOOK OUTPUT");
+      const bodyIndex = result.plan!.finalPrompt.indexOf("Body content");
+      expect(hookIndex).toBeLessThan(bodyIndex);
+    });
+
+    it("still logs to console when returnPlan is false", async () => {
+      const filePath = join(tempDir, "console.claude.md");
+      await writeFile(filePath, `---\n---\nTest prompt`);
+
+      // Capture console.log output
+      const logs: string[] = [];
+      const originalLog = console.log;
+      console.log = (...args: unknown[]) => logs.push(args.join(" "));
+
+      const runtime = createRuntime();
+      const result = await runtime.run(filePath, { dryRun: true, returnPlan: false });
+
+      console.log = originalLog;
+
+      // Should still have the plan
+      expect(result.plan).toBeDefined();
+      // But should also have logged to console
+      expect(logs.some(l => l.includes("DRY RUN"))).toBe(true);
+      expect(logs.some(l => l.includes("Test prompt"))).toBe(true);
     });
   });
 });

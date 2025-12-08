@@ -77,3 +77,32 @@ export interface CommandResult {
   output: string;
   exitCode: number;
 }
+
+/**
+ * Structured execution plan returned by dry-run mode
+ *
+ * Provides complete introspection of what would be executed,
+ * enabling direct testing without parsing stdout.
+ */
+export interface ExecutionPlan {
+  /** Type of result: dry-run shows plan, executed shows result, error shows failure */
+  type: "dry-run" | "executed" | "error";
+  /** The final prompt after all processing (imports, templates, stdin) */
+  finalPrompt: string;
+  /** The command that would be executed (e.g., "claude", "gemini") */
+  command: string;
+  /** CLI arguments built from frontmatter and passthrough */
+  args: string[];
+  /** Environment variables from frontmatter */
+  env: Record<string, string>;
+  /** Estimated token count for the final prompt */
+  estimatedTokens: number;
+  /** The parsed and merged frontmatter configuration */
+  frontmatter: AgentFrontmatter;
+  /** List of files that were imported/resolved (relative paths) */
+  resolvedImports: string[];
+  /** Template variables that were substituted */
+  templateVars: Record<string, string>;
+  /** Positional mappings from frontmatter ($1, $2, etc.) */
+  positionalMappings: Record<number, string>;
+}
