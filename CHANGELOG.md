@@ -1,3 +1,10 @@
+## [2.13.1](https://github.com/johnlindquist/markdown-agent/compare/v2.13.0...v2.13.1) (2025-12-08)
+
+
+### Bug Fixes
+
+* show positional mappings in dry-run output ([357d92a](https://github.com/johnlindquist/markdown-agent/commit/357d92a46f1a311fc8bf1319ecacb0729dcc5f62))
+
 # [2.13.0](https://github.com/johnlindquist/markdown-agent/compare/v2.12.1...v2.13.0) (2025-12-08)
 
 
