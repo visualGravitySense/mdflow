@@ -6,7 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **markdown-agent** (`ma`) is a CLI tool that executes AI agents defined as markdown files. It parses YAML frontmatter for configuration and passes keys directly as CLI flags to the specified command (claude, codex, gemini, copilot, or any other CLI tool).
 
-## Commands
+## CLI Subcommands
+
+```bash
+ma <file.md> [flags]     # Run an agent
+ma create [name]         # Create a new agent file
+ma setup                 # Configure shell (PATH, aliases)
+ma logs                  # Show agent log directory
+ma help                  # Show help
+```
+
+## Development Commands
 
 ```bash
 # Run tests (bail on first failure)
