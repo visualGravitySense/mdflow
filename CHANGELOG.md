@@ -1,3 +1,10 @@
+# [2.13.0](https://github.com/johnlindquist/markdown-agent/compare/v2.12.1...v2.13.0) (2025-12-08)
+
+
+### Features
+
+* change copilot defaults to --interactive and --silent ([d8080bd](https://github.com/johnlindquist/markdown-agent/commit/d8080bd41d88008f0be5190e4b88b4e3de743a6a))
+
 ## [2.12.1](https://github.com/johnlindquist/markdown-agent/compare/v2.12.0...v2.12.1) (2025-12-08)
 
 
