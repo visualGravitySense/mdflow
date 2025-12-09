@@ -10,21 +10,26 @@ _handle_md() {
   local file="$1"
   shift
   # Pass file and any remaining args (--model, --silent, etc.) to handler
-  if command -v md &>/dev/null; then
-    md "$file" "$@"
+  if command -v mdflow &>/dev/null; then
+    mdflow "$file" "$@"
   else
     echo "mdflow not installed. Install with: bun add -g mdflow"
     echo "Attempting to install now..."
     if command -v bun &>/dev/null; then
-      bun add -g mdflow && md "$file" "$@"
+      bun add -g mdflow && mdflow "$file" "$@"
     elif command -v npm &>/dev/null; then
-      npm install -g mdflow && md "$file" "$@"
+      npm install -g mdflow && mdflow "$file" "$@"
     else
       echo "Neither bun nor npm found. Please install mdflow manually."
       return 1
     fi
   fi
 }
+`.trim();
+
+const MD_ALIAS_SNIPPET = `
+# mdflow: Short alias for mdflow command
+alias md='mdflow'
 `.trim();
 
 const PATH_SNIPPET = `
@@ -64,6 +69,71 @@ interface ShellConfig {
   name: string;
   path: string;
   exists: boolean;
+}
+
+interface MdCommandInfo {
+  exists: boolean;
+  type: "binary" | "alias" | "function" | "builtin" | "unknown";
+  location?: string;
+}
+
+/**
+ * Check if 'md' command is already bound to something else
+ */
+async function checkMdCommand(): Promise<MdCommandInfo> {
+  try {
+    // Use 'type' command to check what md is bound to
+    const proc = Bun.spawn(["zsh", "-c", "type -a md 2>/dev/null || bash -c 'type -a md 2>/dev/null'"], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const output = await new Response(proc.stdout).text();
+    await proc.exited;
+
+    if (!output.trim()) {
+      return { exists: false, type: "unknown" };
+    }
+
+    const lines = output.trim().split("\n");
+    const firstLine = (lines[0] ?? "").toLowerCase();
+
+    // Check if it's our mdflow alias
+    if (firstLine.includes("mdflow") || firstLine.includes("alias") && output.includes("mdflow")) {
+      return { exists: false, type: "alias" }; // It's ours, treat as not conflicting
+    }
+
+    // Determine the type
+    if (firstLine.includes("is an alias")) {
+      return { exists: true, type: "alias", location: output.trim() };
+    }
+    if (firstLine.includes("is a shell function") || firstLine.includes("is a function")) {
+      return { exists: true, type: "function", location: output.trim() };
+    }
+    if (firstLine.includes("is a shell builtin")) {
+      return { exists: true, type: "builtin", location: output.trim() };
+    }
+    if (firstLine.includes("is /") || firstLine.includes("is a")) {
+      // Extract the path
+      const match = firstLine.match(/is\s+(\S+)/);
+      return { exists: true, type: "binary", location: match?.[1] || output.trim() };
+    }
+
+    return { exists: true, type: "unknown", location: output.trim() };
+  } catch {
+    return { exists: false, type: "unknown" };
+  }
+}
+
+/**
+ * Check if md alias is already installed in a config file (pointing to mdflow)
+ */
+async function isMdAliasInstalled(configPath: string): Promise<boolean> {
+  try {
+    const content = await Bun.file(configPath).text();
+    return content.includes("alias md='mdflow'") || content.includes('alias md="mdflow"');
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -137,9 +207,10 @@ export async function runSetup(): Promise<void> {
   }
 
   // Check what's already installed
-  const primaryConfig = existingConfigs[0];
+  const primaryConfig = existingConfigs[0]!;
   const aliasInstalled = await isAliasInstalled(primaryConfig.path);
   const pathInstalled = await isPathInstalled(primaryConfig.path);
+  const mdAliasInstalled = await isMdAliasInstalled(primaryConfig.path);
 
   // Build feature choices based on what's not installed
   type FeatureChoice = { name: string; value: SetupFeature; description: string };
@@ -165,7 +236,7 @@ export async function runSetup(): Promise<void> {
     featureChoices.push({
       name: "Alias setup only",
       value: "alias",
-      description: "Run ./file.md instead of md file.md",
+      description: "Run ./file.md instead of mdflow file.md",
     });
   }
 
@@ -189,6 +260,34 @@ export async function runSetup(): Promise<void> {
   if (feature === "path" || feature === "both") {
     if (snippet) snippet += "\n\n";
     snippet += PATH_SNIPPET;
+  }
+
+  // Check if md command is already bound and offer to create alias
+  let addMdAlias = false;
+  if (!mdAliasInstalled) {
+    const mdCommand = await checkMdCommand();
+
+    if (mdCommand.exists) {
+      console.log(`\n⚠️  The 'md' command is already bound to something else:`);
+      console.log(`   ${mdCommand.location || `(${mdCommand.type})`}`);
+      console.log(`\n   This is commonly from oh-my-zsh or other shell plugins.`);
+      console.log(`   You can still use 'mdflow' directly, or override 'md' with an alias.\n`);
+
+      addMdAlias = await confirm({
+        message: "Would you like to add 'alias md=mdflow' to override it?",
+        default: false,
+      });
+    } else {
+      // md is not bound, offer to add the alias
+      addMdAlias = await confirm({
+        message: "Would you like to add 'md' as a short alias for 'mdflow'?",
+        default: true,
+      });
+    }
+
+    if (addMdAlias) {
+      snippet += "\n\n" + MD_ALIAS_SNIPPET;
+    }
   }
 
   // Show what will be added
@@ -247,6 +346,9 @@ export async function runSetup(): Promise<void> {
   if (feature === "alias" || feature === "both") {
     console.log("\nTry: ./examples/auto-detect.md --dry-run");
   }
+  if (addMdAlias) {
+    console.log("\n💡 You can now use 'md' as a shorthand for 'mdflow'");
+  }
 }
 
 /**
@@ -261,4 +363,11 @@ export function getShellSnippet(): string {
  */
 export function getPathSnippet(): string {
   return PATH_SNIPPET;
+}
+
+/**
+ * Get the md alias snippet for display or manual copy
+ */
+export function getMdAliasSnippet(): string {
+  return MD_ALIAS_SNIPPET;
 }
