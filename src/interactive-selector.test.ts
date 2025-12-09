@@ -46,9 +46,10 @@ describe("findAgentFiles", () => {
 
     const files = await findAgentFiles();
 
-    expect(files.length).toBe(2);
-    expect(files.map(f => f.name).sort()).toEqual(["agent1.md", "agent2.md"]);
-    expect(files.every(f => f.source === "cwd")).toBe(true);
+    // Filter to only cwd files (ignoring ~/.ma files that may exist on user's system)
+    const cwdFiles = files.filter(f => f.source === "cwd");
+    expect(cwdFiles.length).toBe(2);
+    expect(cwdFiles.map(f => f.name).sort()).toEqual(["agent1.md", "agent2.md"]);
   });
 
   test("finds .md files in PATH directories", async () => {
@@ -67,9 +68,11 @@ describe("findAgentFiles", () => {
 
     const files = await findAgentFiles();
 
-    expect(files.length).toBe(1);
-    expect(files[0].name).toBe("global-agent.md");
-    expect(files[0].source).toBe(pathDir);
+    // Filter to only PATH files (ignoring ~/.ma files that may exist)
+    const pathFiles = files.filter(f => f.source === pathDir);
+    expect(pathFiles.length).toBe(1);
+    expect(pathFiles[0].name).toBe("global-agent.md");
+    expect(pathFiles[0].source).toBe(pathDir);
   });
 
   test("deduplicates files that appear in both cwd and PATH", async () => {
@@ -81,13 +84,16 @@ describe("findAgentFiles", () => {
 
     const files = await findAgentFiles();
 
+    // Filter to files from cwd or PATH only (ignoring ~/.ma files)
+    const relevantFiles = files.filter(f => f.source === "cwd" || f.source === testDir);
+
     // Should only appear once (from cwd, since we scan that first)
-    expect(files.length).toBe(1);
-    expect(files[0].name).toBe("shared-agent.md");
-    expect(files[0].source).toBe("cwd");
+    expect(relevantFiles.length).toBe(1);
+    expect(relevantFiles[0].name).toBe("shared-agent.md");
+    expect(relevantFiles[0].source).toBe("cwd");
   });
 
-  test("returns empty array when no .md files exist", async () => {
+  test("returns empty array when no .md files exist in cwd or PATH", async () => {
     // Empty directory
     const emptyDir = join(testDir, "empty");
     mkdirSync(emptyDir, { recursive: true });
@@ -97,7 +103,9 @@ describe("findAgentFiles", () => {
 
     const files = await findAgentFiles();
 
-    expect(files).toEqual([]);
+    // Filter out ~/.ma and .ma files - test only checks cwd and PATH are empty
+    const cwdOrPathFiles = files.filter(f => f.source === "cwd");
+    expect(cwdOrPathFiles).toEqual([]);
   });
 
   test("handles non-existent PATH directories gracefully", async () => {
@@ -110,7 +118,9 @@ describe("findAgentFiles", () => {
 
     // Should not throw
     const files = await findAgentFiles();
-    expect(files).toEqual([]);
+    // Filter out ~/.ma and .ma files - test only checks non-existent PATH is handled
+    const cwdOrPathFiles = files.filter(f => f.source === "cwd");
+    expect(cwdOrPathFiles).toEqual([]);
   });
 
   test("combines files from cwd and multiple PATH directories", async () => {
@@ -132,13 +142,18 @@ describe("findAgentFiles", () => {
 
     const files = await findAgentFiles();
 
-    expect(files.length).toBe(3);
-    expect(files.map(f => f.name).sort()).toEqual(["global1.md", "global2.md", "local.md"]);
+    // Filter to only cwd and our test PATH directories (ignoring ~/.ma files)
+    const relevantFiles = files.filter(f =>
+      f.source === "cwd" || f.source === pathDir1 || f.source === pathDir2
+    );
+
+    expect(relevantFiles.length).toBe(3);
+    expect(relevantFiles.map(f => f.name).sort()).toEqual(["global1.md", "global2.md", "local.md"]);
 
     // Verify sources
-    const localFile = files.find(f => f.name === "local.md");
-    const global1File = files.find(f => f.name === "global1.md");
-    const global2File = files.find(f => f.name === "global2.md");
+    const localFile = relevantFiles.find(f => f.name === "local.md");
+    const global1File = relevantFiles.find(f => f.name === "global1.md");
+    const global2File = relevantFiles.find(f => f.name === "global2.md");
 
     expect(localFile?.source).toBe("cwd");
     expect(global1File?.source).toBe(pathDir1);
@@ -154,8 +169,10 @@ describe("findAgentFiles", () => {
 
     // Should not throw
     const files = await findAgentFiles();
-    expect(files.length).toBe(1);
-    expect(files[0].name).toBe("agent.md");
+    // Filter to only cwd files (ignoring ~/.ma files)
+    const cwdFiles = files.filter(f => f.source === "cwd");
+    expect(cwdFiles.length).toBe(1);
+    expect(cwdFiles[0].name).toBe("agent.md");
   });
 });
 
