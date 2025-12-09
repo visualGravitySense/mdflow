@@ -761,10 +761,19 @@ async function processCommandInline(
     const stderr = result.stderr.toString().trim();
 
     // Combine stdout and stderr (stderr first if both exist)
+    let output: string;
     if (stderr && stdout) {
-      return `${stderr}\n${stdout}`;
+      output = `${stderr}\n${stdout}`;
+    } else {
+      output = stdout || stderr || "";
     }
-    return stdout || stderr || "";
+
+    // Wrap in {% raw %}...{% endraw %} to prevent LiquidJS from interpreting
+    // any template-like syntax (e.g., {{ variable }}) in command output
+    if (output) {
+      return `{% raw %}\n${output}\n{% endraw %}`;
+    }
+    return output;
   } catch (err) {
     throw new Error(`Command failed: ${command} - ${(err as Error).message}`);
   }

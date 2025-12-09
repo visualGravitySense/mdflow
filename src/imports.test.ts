@@ -71,13 +71,14 @@ test("expandImports throws on missing file", async () => {
 test("expandImports executes command inline", async () => {
   const content = "Output: !`echo hello`";
   const result = await expandImports(content, testDir);
-  expect(result).toBe("Output: hello");
+  // Command output is wrapped in {% raw %} to prevent LiquidJS template interpretation
+  expect(result).toBe("Output: {% raw %}\nhello\n{% endraw %}");
 });
 
 test("expandImports handles command with arguments", async () => {
   const content = "!`echo one two three`";
   const result = await expandImports(content, testDir);
-  expect(result).toBe("one two three");
+  expect(result).toBe("{% raw %}\none two three\n{% endraw %}")
 });
 
 test("expandImports handles multiple imports", async () => {
@@ -89,7 +90,7 @@ test("expandImports handles multiple imports", async () => {
 test("expandImports handles mixed file and command", async () => {
   const content = "File: @./simple.md Command: !`echo test`";
   const result = await expandImports(content, testDir);
-  expect(result).toBe("File: Hello from simple.md Command: test");
+  expect(result).toBe("File: Hello from simple.md Command: {% raw %}\ntest\n{% endraw %}");
 });
 
 test("expandImports preserves content without imports", async () => {
