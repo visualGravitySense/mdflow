@@ -167,8 +167,16 @@ export class CliRunner {
     let localFilePath = filePath;
     let isRemote = false;
 
+    // Check for --no-cache flag early (needed before fetchRemote call)
+    let noCacheFlag = false;
+    const noCacheIdx = passthroughArgs.indexOf("--no-cache");
+    if (noCacheIdx !== -1) {
+      noCacheFlag = true;
+      passthroughArgs = [...passthroughArgs.slice(0, noCacheIdx), ...passthroughArgs.slice(noCacheIdx + 1)];
+    }
+
     if (isRemoteUrl(filePath)) {
-      const remoteResult = await fetchRemote(filePath);
+      const remoteResult = await fetchRemote(filePath, { noCache: noCacheFlag });
       if (!remoteResult.success) {
         throw new NetworkError(`Failed to fetch remote file: ${remoteResult.error}`);
       }
@@ -244,7 +252,7 @@ export class CliRunner {
   private parseFlags(passthroughArgs: string[]) {
     let remainingArgs = [...passthroughArgs];
     let commandFromCli: string | undefined;
-    let dryRun = false, trustFlag = false, interactiveFromCli = false;
+    let dryRun = false, trustFlag = false, interactiveFromCli = false, noCache = false;
     let cwdFromCli: string | undefined;
 
     const cmdIdx = remainingArgs.findIndex((a) => a === "--command" || a === "-c");
@@ -256,6 +264,8 @@ export class CliRunner {
     if (dryIdx !== -1) { dryRun = true; remainingArgs.splice(dryIdx, 1); }
     const trustIdx = remainingArgs.indexOf("--trust");
     if (trustIdx !== -1) { trustFlag = true; remainingArgs.splice(trustIdx, 1); }
+    const noCacheIdx = remainingArgs.indexOf("--no-cache");
+    if (noCacheIdx !== -1) { noCache = true; remainingArgs.splice(noCacheIdx, 1); }
     const intIdx = remainingArgs.findIndex((a) => a === "--_interactive" || a === "-_i");
     if (intIdx !== -1) { interactiveFromCli = true; remainingArgs.splice(intIdx, 1); }
     const cwdIdx = remainingArgs.findIndex((a) => a === "--_cwd");
@@ -264,7 +274,7 @@ export class CliRunner {
       remainingArgs.splice(cwdIdx, 2);
     }
 
-    return { remainingArgs, commandFromCli, dryRun, trustFlag, interactiveFromCli, cwdFromCli };
+    return { remainingArgs, commandFromCli, dryRun, trustFlag, interactiveFromCli, cwdFromCli, noCache };
   }
 
   private async processAgent(
