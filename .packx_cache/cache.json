@@ -1,0 +1,803 @@
+{
+  "version": 2,
+  "entries": {
+    "src/fetch.ts": {
+      "mtime": 1765262464628,
+      "size": 9030,
+      "contentHash": "3d7a1942d1c19009ce422a6d2c9d86451312700b0c96e75132dd7802833b4538",
+      "isBinary": false,
+      "tokens": 2106
+    },
+    "src/import-feedback.test.ts": {
+      "mtime": 1765170899093,
+      "size": 7947,
+      "contentHash": "4a53ecd94108e3428ab9f4312c1a98347fcc93f602d2c5c9199f2e9043da9d8f",
+      "isBinary": false,
+      "tokens": 1979
+    },
+    "src/imports.test.ts": {
+      "mtime": 1765261702126,
+      "size": 18324,
+      "contentHash": "5615fabfbd6306b1c3e469a74ce8a590c58c10f8b5ce45477980c45775ee5fd0",
+      "isBinary": false,
+      "tokens": 4467
+    },
+    "src/command-builder.test.ts": {
+      "mtime": 1765208947027,
+      "size": 22369,
+      "contentHash": "4fb4458cb0fb6c47320c927ac86083d4e08264915c6be5aee259dc40d7ab6cc8",
+      "isBinary": false,
+      "tokens": 5455
+    },
+    "src/cli.test.ts": {
+      "mtime": 1765261708985,
+      "size": 4654,
+      "contentHash": "0c4100f0acfe7e31fe95bdc6771e200ca89c80b7faa806eb57e26ac515ee54a9",
+      "isBinary": false,
+      "tokens": 1158
+    },
+    "src/logger.test.ts": {
+      "mtime": 1765261124530,
+      "size": 868,
+      "contentHash": "af633fe494c5f9c33dd011798f7f5d4d6dcd7e7c8bcd34221fa27b3335ef0f4d",
+      "isBinary": false,
+      "tokens": 238
+    },
+    "src/runtime.test.ts": {
+      "mtime": 1765228369245,
+      "size": 20233,
+      "contentHash": "716bba21c339b024d8b2d3eae1793b7bbda428641886bc7942177469360728df",
+      "isBinary": false,
+      "tokens": 4457
+    },
+    "src/streams.ts": {
+      "mtime": 1765208947029,
+      "size": 3740,
+      "contentHash": "bbb20b7f8a18261c29e98289e81798d79bf41dc238106922625ede2d0927e631",
+      "isBinary": false,
+      "tokens": 857
+    },
+    "src/config.test.ts": {
+      "mtime": 1765261734659,
+      "size": 12302,
+      "contentHash": "005506c5ef3b0e52d0afc0c6caad1d2860d658560ec57929b4486aba076e2543",
+      "isBinary": false,
+      "tokens": 3013
+    },
+    "src/command.ts": {
+      "mtime": 1765261688543,
+      "size": 10684,
+      "contentHash": "abc0acae74ac8053184c11859a453f3207a2e8b6d9e864913d8c6f62ab5fd053",
+      "isBinary": false,
+      "tokens": 2571
+    },
+    "src/dry-run.test.ts": {
+      "mtime": 1765261753020,
+      "size": 7559,
+      "contentHash": "739fec344af3b628342e4d1594cb6d1bbf9efe7576e39e567ac74a231531abc5",
+      "isBinary": false,
+      "tokens": 1917
+    },
+    "src/fetch.test.ts": {
+      "mtime": 1765262464628,
+      "size": 9858,
+      "contentHash": "cfcc53cdb400d835e3ed8f84a3a670c6024f740dc44039d5e369f1f9cee97e84",
+      "isBinary": false,
+      "tokens": 2331
+    },
+    "src/imports-parser.ts": {
+      "mtime": 1765208924140,
+      "size": 4954,
+      "contentHash": "6e180fc71fa91647bc29da65d841f8825cb162e78662b96ead9aef7cc2ba6bd8",
+      "isBinary": false,
+      "tokens": 1248
+    },
+    "src/config.ts": {
+      "mtime": 1765261124528,
+      "size": 12820,
+      "contentHash": "ad1bee82b50b4e026d6f3d401f4a935ab93af110547fa36e0b4635dc4da73fb0",
+      "isBinary": false,
+      "tokens": 2940
+    },
+    "src/env.ts": {
+      "mtime": 1765084442007,
+      "size": 4862,
+      "contentHash": "553a54e34f8f51bd4600f68756f7fe16ba5ffa004dc0c032318b5aa936c50729",
+      "isBinary": false,
+      "tokens": 1173
+    },
+    "src/system-environment.ts": {
+      "mtime": 1765208924133,
+      "size": 17958,
+      "contentHash": "d0db531088c747f26f227b2b5218663e06a97ed05fb8a1eef616119ab8a3393b",
+      "isBinary": false,
+      "tokens": 4143
+    },
+    "src/imports-resolver.ts": {
+      "mtime": 1765208924140,
+      "size": 9903,
+      "contentHash": "73c06c64accbe1331b1786ee4349fa168c5f53ebf9a5caca0700e085e762e580",
+      "isBinary": false,
+      "tokens": 2484
+    },
+    "src/limits.test.ts": {
+      "mtime": 1765261759489,
+      "size": 4265,
+      "contentHash": "90db11501af566f537ac3920b3415e7451a9980351a064217093c4c2e3d79501",
+      "isBinary": false,
+      "tokens": 1082
+    },
+    "src/create.ts": {
+      "mtime": 1765261124529,
+      "size": 6781,
+      "contentHash": "7921d29637adf6d738fe9a97368c38970f6f3bb2d3e71ccc04be66aad4ef6013",
+      "isBinary": false,
+      "tokens": 1715
+    },
+    "src/index.ts": {
+      "mtime": 1765261124529,
+      "size": 20203,
+      "contentHash": "f7cafd6996d9aaed32e3b6f30e8a5dbdc82137d368e3fb5ba3d6933269b6ad62",
+      "isBinary": false,
+      "tokens": 4621
+    },
+    "src/ui.test.ts": {
+      "mtime": 1765261124531,
+      "size": 15110,
+      "contentHash": "031816a2079e958eddfbd8d8ab9db1f44319d6ff27996764f71a30f77250496e",
+      "isBinary": false,
+      "tokens": 3649
+    },
+    "src/limits.ts": {
+      "mtime": 1765139198235,
+      "size": 1689,
+      "contentHash": "5656a9bdc14e82a3c53a6d9ce6269728fb48358a5ed9972b55976d32545b4f9f",
+      "isBinary": false,
+      "tokens": 414
+    },
+    "src/remote.ts": {
+      "mtime": 1765262464629,
+      "size": 3292,
+      "contentHash": "e316567598382f6f25bfcc94430f0e5bc8a8e2c7584311b87772d412d2fce087",
+      "isBinary": false,
+      "tokens": 822
+    },
+    "src/ui.ts": {
+      "mtime": 1765208947030,
+      "size": 7709,
+      "contentHash": "d3ed06ff47f1cf49433b9b37a14bf019d602f4c792a028b876f054404f697ccb",
+      "isBinary": false,
+      "tokens": 1702
+    },
+    "src/stream.test.ts": {
+      "mtime": 1765170893002,
+      "size": 6691,
+      "contentHash": "74ee2efe5fc2dfe93fc86f18642386ce228d7716ff7c94dce137e74698eaa5eb",
+      "isBinary": false,
+      "tokens": 1536
+    },
+    "src/tokenizer.test.ts": {
+      "mtime": 1765170899094,
+      "size": 7589,
+      "contentHash": "ad92baa4124fa81a95d513cd9900b9dd1ba2222727101f2cc1276bbe9c372a41",
+      "isBinary": false,
+      "tokens": 1914
+    },
+    "src/system-environment.test.ts": {
+      "mtime": 1765208924133,
+      "size": 17910,
+      "contentHash": "44b2696e65bc99a1f87c0dbe0c9d7a40a00934734a6ae003f167577e9d85459d",
+      "isBinary": false,
+      "tokens": 4044
+    },
+    "src/remote.test.ts": {
+      "mtime": 1765133140094,
+      "size": 1842,
+      "contentHash": "c7ed8141e44926e99de8fa68e76e632710b791044c37ab5ff03af243ce0a2b53",
+      "isBinary": false,
+      "tokens": 480
+    },
+    "src/streams.test.ts": {
+      "mtime": 1765261777005,
+      "size": 7671,
+      "contentHash": "e41b9053690bb1ca88c85c16821fd077b405e9dbd74370308e2860c8c17b8005",
+      "isBinary": false,
+      "tokens": 1708
+    },
+    "src/interactive-selector.test.ts": {
+      "mtime": 1765261785406,
+      "size": 6562,
+      "contentHash": "5c77bc69f16e575efeb261228cb176a3512dc20fc05cddd62efb237ce1cbf1d6",
+      "isBinary": false,
+      "tokens": 1648
+    },
+    "src/context.test.ts": {
+      "mtime": 1765261124528,
+      "size": 11592,
+      "contentHash": "4019a6647524c2a89cc2108171b40c7e0a8b842a64dc5b6e17be2d9856337b77",
+      "isBinary": false,
+      "tokens": 2806
+    },
+    "src/file-selector.ts": {
+      "mtime": 1765288598485,
+      "size": 11605,
+      "contentHash": "13831278bcb775d02be07c20d853dc335265795df4de4810578f32c91c2e5d4a",
+      "isBinary": false,
+      "tokens": 2981
+    },
+    "src/logger.ts": {
+      "mtime": 1765261124530,
+      "size": 2982,
+      "contentHash": "c602e1d31d3d0b6b29d3935e4b9924609a760fffd01188b5ba146d5ae20943f4",
+      "isBinary": false,
+      "tokens": 723
+    },
+    "src/types.ts": {
+      "mtime": 1765262464629,
+      "size": 5343,
+      "contentHash": "96ec5a9a9e89edfb496810c11c55c52948670c30a1437ac86355cdea53c03bb7",
+      "isBinary": false,
+      "tokens": 1237
+    },
+    "src/runtime.ts": {
+      "mtime": 1765208947028,
+      "size": 20776,
+      "contentHash": "cf74282ec35fd53e89ac507a7416be2ace430f765bb8c25b6e2683e83c17cefe",
+      "isBinary": false,
+      "tokens": 4568
+    },
+    "src/stream.ts": {
+      "mtime": 1765170893002,
+      "size": 3401,
+      "contentHash": "9904928fdcbc1c9a13fd06000eaa06fc6204398bc05325452bc0aa537a4c7576",
+      "isBinary": false,
+      "tokens": 760
+    },
+    "src/smoke-pipe.test.ts": {
+      "mtime": 1765261791883,
+      "size": 6388,
+      "contentHash": "71bcf5c8581bce93843158d87e5e65021f5b61c5ac9b1d308240b624b100ad22",
+      "isBinary": false,
+      "tokens": 1624
+    },
+    "src/imports.ts": {
+      "mtime": 1765264782824,
+      "size": 29287,
+      "contentHash": "9fb15d41c2efbd06fc317f6a30dd43e7c9c1ca4bad12e21d4835394aa132b72e",
+      "isBinary": false,
+      "tokens": 7160
+    },
+    "src/snapshot.test.ts": {
+      "mtime": 1765262464629,
+      "size": 8208,
+      "contentHash": "036c4ae309c7bd3ba0c9601d9c7300c3ec9a1ab3bff5bd915d0a6f4dcac67e71",
+      "isBinary": false,
+      "tokens": 1836
+    },
+    "src/args.test.ts": {
+      "mtime": 1765261847157,
+      "size": 7255,
+      "contentHash": "4bc31de0af8abbbe1984f7ef5adb292c52f7cbefc24337ef82df17cf5170392f",
+      "isBinary": false,
+      "tokens": 1728
+    },
+    "src/stdin-abstraction.test.ts": {
+      "mtime": 1765208947029,
+      "size": 11757,
+      "contentHash": "0655fb6b2d6bf7305126d30ed8c47e9527e6d84064b34bfe2ba0b9822f3fd728",
+      "isBinary": false,
+      "tokens": 2677
+    },
+    "src/crash-log.test.ts": {
+      "mtime": 1765261799055,
+      "size": 3450,
+      "contentHash": "3587b37121358cfc43319c648708df1810551071bd744a30045e3a6bd84ffc5b",
+      "isBinary": false,
+      "tokens": 843
+    },
+    "src/interactive-vars.test.ts": {
+      "mtime": 1765139250686,
+      "size": 5006,
+      "contentHash": "97665f1727c7818b184fb21cfc1a90aa8a2084738d96698000aad5f7702f52fe",
+      "isBinary": false,
+      "tokens": 1107
+    },
+    "src/tokenizer.ts": {
+      "mtime": 1765170899094,
+      "size": 4034,
+      "contentHash": "d070fb70c067c0d9acb94ae85ad72775c436af57f7e8b7918f9526f535e4141b",
+      "isBinary": false,
+      "tokens": 1106
+    },
+    "src/template.test.ts": {
+      "mtime": 1765170893003,
+      "size": 11699,
+      "contentHash": "dd120102a3c0c55b5d455dde85f65afa8398d2d221d8bb66f29088d853bee5a3",
+      "isBinary": false,
+      "tokens": 2779
+    },
+    "src/imports-types.ts": {
+      "mtime": 1765208924141,
+      "size": 2982,
+      "contentHash": "b9e667668a96f0c36bb20a51709aebafd67220acd26df61d9315dd4d93d0a24d",
+      "isBinary": false,
+      "tokens": 660
+    },
+    "src/imports-parser.test.ts": {
+      "mtime": 1765208924140,
+      "size": 18796,
+      "contentHash": "5bae1eae1daf183e5f25116555bd1d54f167a1d4622fc2a4fa2337c6bc16e4ef",
+      "isBinary": false,
+      "tokens": 4724
+    },
+    "src/setup.ts": {
+      "mtime": 1765289193961,
+      "size": 13302,
+      "contentHash": "dc533dd8e37874a50b27054bec108dbf54a6b7a970a6c0d5b3b9d370518309ba",
+      "isBinary": false,
+      "tokens": 3531
+    },
+    "src/context.ts": {
+      "mtime": 1765208947028,
+      "size": 7103,
+      "contentHash": "58874b3b352b8993b5551050ba67883a49754c2b357a82718f99fe09c7abd23c",
+      "isBinary": false,
+      "tokens": 1731
+    },
+    "src/trust.test.ts": {
+      "mtime": 1765261124530,
+      "size": 5292,
+      "contentHash": "400c9daf8874c0960bec070d600331a3899b6a41e313c0002de28f54545f60a2",
+      "isBinary": false,
+      "tokens": 1277
+    },
+    "src/cli.ts": {
+      "mtime": 1765288598485,
+      "size": 7924,
+      "contentHash": "d4e98da2a048a36b36801eafc8b1f633b3a14acaad97f05b9641bf1bd2a63aa4",
+      "isBinary": false,
+      "tokens": 1932
+    },
+    "src/command-builder.ts": {
+      "mtime": 1765208947027,
+      "size": 8068,
+      "contentHash": "e1fec57ccba742ef17eec354279be9aea261c53c7d865f43a327156b2cbbfdf5",
+      "isBinary": false,
+      "tokens": 1881
+    },
+    "src/environment.ts": {
+      "mtime": 1765208947028,
+      "size": 3097,
+      "contentHash": "4810317935877e875b68298da64ee970aaadad3e0292a67099d9afbe85234cb9",
+      "isBinary": false,
+      "tokens": 719
+    },
+    "src/parse.test.ts": {
+      "mtime": 1765261816950,
+      "size": 4215,
+      "contentHash": "edb544557481c2b8ec61a99872318545b7a44614bf0fdc9c2216f088753cf173",
+      "isBinary": false,
+      "tokens": 1069
+    },
+    "src/command.test.ts": {
+      "mtime": 1765170893000,
+      "size": 11192,
+      "contentHash": "1f268c0f3219e02f4052b2dcbc90320bbbb3ed2a0d0d5c23d6004f2ea7c4254a",
+      "isBinary": false,
+      "tokens": 2665
+    },
+    "src/trust.ts": {
+      "mtime": 1765261124530,
+      "size": 5788,
+      "contentHash": "9fe47b04fa892095d0685f8cb26fe4a419d35a43c15058fa964e18c1020644fc",
+      "isBinary": false,
+      "tokens": 1393
+    },
+    "src/imports-injector.test.ts": {
+      "mtime": 1765208924140,
+      "size": 11246,
+      "contentHash": "a0050f719fb3275db9c72ab249e694621aaa1e8532d956e50ac5e94de474d9ee",
+      "isBinary": false,
+      "tokens": 2657
+    },
+    "src/template.ts": {
+      "mtime": 1765170893003,
+      "size": 3292,
+      "contentHash": "14fad48b8c8911f5d88c4c6f26f6bf5b50f565c3e5d6ed2a3026b1000597c211",
+      "isBinary": false,
+      "tokens": 765
+    },
+    "src/binary.test.ts": {
+      "mtime": 1765139257028,
+      "size": 7692,
+      "contentHash": "cd887258f463fe53e01214076799b0c257ce6315ca6efb376d4998edc91b897b",
+      "isBinary": false,
+      "tokens": 1975
+    },
+    "src/errors.ts": {
+      "mtime": 1765262464628,
+      "size": 3772,
+      "contentHash": "eebafc72faeda1ec97c95266ce9dea684d3f88fe0ae20ec76b52662bb3df0b3f",
+      "isBinary": false,
+      "tokens": 834
+    },
+    "src/parse.ts": {
+      "mtime": 1765261665696,
+      "size": 2374,
+      "contentHash": "f802213b456c53b79e114a888b32874594ba5866b3f59cec99a89d60708ef2f6",
+      "isBinary": false,
+      "tokens": 576
+    },
+    "src/schema.test.ts": {
+      "mtime": 1765127508714,
+      "size": 2412,
+      "contentHash": "4b46c82ff32482de78d71eb76ffdeb7bd2e4983f7df528dfda368cb13227373f",
+      "isBinary": false,
+      "tokens": 598
+    },
+    "src/env.test.ts": {
+      "mtime": 1765084442007,
+      "size": 3066,
+      "contentHash": "5e585449f4338f91727a3a08643065008e38c5ed529b13b4d9bfc2e2d095da28",
+      "isBinary": false,
+      "tokens": 794
+    },
+    "src/errors.test.ts": {
+      "mtime": 1765261854405,
+      "size": 13375,
+      "contentHash": "89edd334af95c1f12d7f8fff76d3d3a0d49689a749227a50714945ab71014835",
+      "isBinary": false,
+      "tokens": 3033
+    },
+    "src/imports-injector.ts": {
+      "mtime": 1765208924140,
+      "size": 1652,
+      "contentHash": "5265645176db61fb9a1c41e2d85ae1887e882358b3466052ad5ef0ba8ea54eb4",
+      "isBinary": false,
+      "tokens": 355
+    },
+    "src/binary-check.test.ts": {
+      "mtime": 1765138828275,
+      "size": 3177,
+      "contentHash": "8154ce4b254840967a1360f76ed3696e8bbc1a33cc8e0450de857e9dcaad732a",
+      "isBinary": false,
+      "tokens": 736
+    },
+    "src/epipe.test.ts": {
+      "mtime": 1765261866540,
+      "size": 2134,
+      "contentHash": "60e099b3c0400d9d0326204ca451f7b48bdc469181cfb2ceece6cbb7fbca06a1",
+      "isBinary": false,
+      "tokens": 532
+    },
+    "src/schema.ts": {
+      "mtime": 1765133008136,
+      "size": 2044,
+      "contentHash": "0eca672c6eac3892e010f5299f1f46d06fc6db251a18b2f7bdfd844f55cbc973",
+      "isBinary": false,
+      "tokens": 474
+    },
+    "tsconfig.json": {
+      "mtime": 1764882966068,
+      "size": 713,
+      "contentHash": "11a68339a9c6a0c04a67b95dff9eefd9a92c42fa35161411048405272ab192c8",
+      "isBinary": false,
+      "tokens": 192
+    },
+    "CLAUDE.md": {
+      "mtime": 1765261124527,
+      "size": 5612,
+      "contentHash": "d8eafb6951abcef69d487909d9543ba42adb86d0c3c9667d5f057b65cda2fff8",
+      "isBinary": false,
+      "tokens": 1451
+    },
+    "examples/hello.copilot.md": {
+      "mtime": 1765131281106,
+      "size": 44,
+      "contentHash": "58c75423707dd432295d956717e982f0117e32e30bb396480b1e5701d2910ee3",
+      "isBinary": false,
+      "tokens": 11
+    },
+    "examples/commit.claude.md": {
+      "mtime": 1765131095439,
+      "size": 325,
+      "contentHash": "bb1c956948eeb3ca6b932847322b0be2f50985d09b62d7f66effa4fca72fdce5",
+      "isBinary": false,
+      "tokens": 80
+    },
+    "examples/yolo.gemini.md": {
+      "mtime": 1765132334760,
+      "size": 164,
+      "contentHash": "e61eea8db227a28855ff2755cb6099878381703655ab629832673bb086e64835",
+      "isBinary": false,
+      "tokens": 47
+    },
+    "examples/full-auto.codex.md": {
+      "mtime": 1765131074045,
+      "size": 173,
+      "contentHash": "b70f3074aa1adebca271c5f12b664820e22dd1cb952c25362c74e1d4b6659a58",
+      "isBinary": false,
+      "tokens": 42
+    },
+    "examples/mcp.claude.md": {
+      "mtime": 1765131073958,
+      "size": 199,
+      "contentHash": "e9ba537f85723519cf1de8f3b99d26ccc09b96762722c5250e882a76d019862b",
+      "isBinary": false,
+      "tokens": 54
+    },
+    "examples/env-config.claude.md": {
+      "mtime": 1765132957179,
+      "size": 249,
+      "contentHash": "1dff921b8e56ea2856a7e44734d7643e83dadd7c987638e47dfe1b11158da39a",
+      "isBinary": false,
+      "tokens": 70
+    },
+    "examples/template-args.claude.md": {
+      "mtime": 1765133643432,
+      "size": 322,
+      "contentHash": "82812e4b74a1b3c6aae0531a54f96966465f56290e1566aaced5d3d98f83a4b4",
+      "isBinary": false,
+      "tokens": 81
+    },
+    "examples/env-flags.claude.md": {
+      "mtime": 1765131095279,
+      "size": 229,
+      "contentHash": "f1b54b81242dca28f50d2b782ca5f53cf593f4fed03b2c6dce108d4de931d15d",
+      "isBinary": false,
+      "tokens": 57
+    },
+    "examples/hello.claude.md": {
+      "mtime": 1765131073894,
+      "size": 127,
+      "contentHash": "8425c5ad003807093a001dd68135b6991926d17e9ba3a81130ab61894b7933f2",
+      "isBinary": false,
+      "tokens": 32
+    },
+    "examples/review.claude.md": {
+      "mtime": 1765131095529,
+      "size": 260,
+      "contentHash": "d65d974cc89a2ff4dd8608c408b5bb2f3f45d0513371536de5fa89a8c02436a6",
+      "isBinary": false,
+      "tokens": 61
+    },
+    "examples/positional-map.copilot.md": {
+      "mtime": 1765131095359,
+      "size": 197,
+      "contentHash": "6130db1ef15b28cf3aa94e8a06b6d0759686d997016427c13c620a9ef89af682",
+      "isBinary": false,
+      "tokens": 54
+    },
+    "examples/local-llm.codex.md": {
+      "mtime": 1765131074109,
+      "size": 218,
+      "contentHash": "e939f86905bbc29d228ca5e8c01ae019ab33a19fd27f6f9036fc955df1a26ed5",
+      "isBinary": false,
+      "tokens": 57
+    },
+    "package.json": {
+      "mtime": 1765289193959,
+      "size": 1084,
+      "contentHash": "35bec46f620ec17a2b128ae63333ed0d21179c361c00078ff952a422a980c054",
+      "isBinary": false,
+      "tokens": 392
+    },
+    "GUIDE.md": {
+      "mtime": 1765208947037,
+      "size": 12608,
+      "contentHash": "ae1431c775d2438ef40c6e3d7fae18d4ec976aa659ba307be1e3c9418c1a349a",
+      "isBinary": false,
+      "tokens": 3287
+    },
+    "smoke-tests/test1.copilot.md": {
+      "mtime": 1765078407072,
+      "size": 196,
+      "contentHash": "c8a21bf60d88012ca986a49b18783317d151e4919d9b9e89a26c2bb18ade4400",
+      "isBinary": false,
+      "tokens": 59
+    },
+    "README.md": {
+      "mtime": 1765261124527,
+      "size": 12801,
+      "contentHash": "6e3f5ca81cf2f92e4d3a93f1d52b77e072aa0def7ae8079ab63c1adc42438fae",
+      "isBinary": false,
+      "tokens": 3349
+    },
+    "smoke-tests/test2.claude.md": {
+      "mtime": 1765078013925,
+      "size": 136,
+      "contentHash": "ff311a8cb7617cbdf66dd2e5e0995b78f51db2af66f5ee46fcaa41ad852e6146",
+      "isBinary": false,
+      "tokens": 36
+    },
+    "smoke-tests/test2.gemini.md": {
+      "mtime": 1765132334820,
+      "size": 121,
+      "contentHash": "2abdda32da3c52a96ce1aefd624ee40ba00d8aed03d09e19e2f8ed89d6682405",
+      "isBinary": false,
+      "tokens": 37
+    },
+    "smoke-tests/test1.codex.md": {
+      "mtime": 1765078014569,
+      "size": 92,
+      "contentHash": "b1234cba1ef0cadbf51cfb653fd39837190264eeda29d14d7c0ad64e030c752f",
+      "isBinary": false,
+      "tokens": 27
+    },
+    "smoke-tests/test1.gemini.md": {
+      "mtime": 1765078094629,
+      "size": 125,
+      "contentHash": "b269ad0ba6ad42c32d03d0449fef2bfd3777b00dd20f94a12e0e8bc770467d1b",
+      "isBinary": false,
+      "tokens": 31
+    },
+    "smoke-tests/test1.claude.md": {
+      "mtime": 1765078013864,
+      "size": 106,
+      "contentHash": "6a1259ced24e65bbb40e62e61ff638b359ff12ea43775f67cf9a7493bfed4baa",
+      "isBinary": false,
+      "tokens": 30
+    },
+    "CHANGELOG.md": {
+      "mtime": 1765289193958,
+      "size": 16637,
+      "contentHash": "13a2b3bcee8afdc0246f0c41250665dd4d4d8a8599e65c5087023612bbf50dfb",
+      "isBinary": false,
+      "tokens": 5799
+    },
+    "test/fixtures/simple.claude.md": {
+      "mtime": 1765208947032,
+      "size": 184,
+      "contentHash": "e8f983527836dd85ee74f5aee9bc5a0ccb11d7b6264d4d9c0d827f511c188565",
+      "isBinary": false,
+      "tokens": 45
+    },
+    "test/fixtures/nested-import.claude.md": {
+      "mtime": 1765208947032,
+      "size": 106,
+      "contentHash": "376e23659beeec2d4ac998f002529243473db08cadc4e9e4008513feb6c903a1",
+      "isBinary": false,
+      "tokens": 28
+    },
+    "test/fixtures/symbol-extraction.claude.md": {
+      "mtime": 1765208947032,
+      "size": 198,
+      "contentHash": "32dd5bf4608182370f94f9a381ac78d0f41afa8f8c79d768b7fc2a8265bc67a8",
+      "isBinary": false,
+      "tokens": 45
+    },
+    "test/fixtures/complex-combined.claude.md": {
+      "mtime": 1765208947030,
+      "size": 713,
+      "contentHash": "633b051bba12c5dd0e616b7ddc0e083d3d0d7c90caa791e7ea405dc003c8e7df",
+      "isBinary": false,
+      "tokens": 160
+    },
+    "test/fixtures/file-import.claude.md": {
+      "mtime": 1765208947031,
+      "size": 85,
+      "contentHash": "3ab05f7fb131b2e11cddcaea3a69b63c3dad9358e5d7f3ab47f9d8ba3bdae7fc",
+      "isBinary": false,
+      "tokens": 22
+    },
+    "test/fixtures/imports/nested-inner.md": {
+      "mtime": 1765208947032,
+      "size": 27,
+      "contentHash": "7a0e53618e7bbae26d0954a69464b2c6f7c9132e81588dc16ae8017aca91a94f",
+      "isBinary": false,
+      "tokens": 5
+    },
+    "test/fixtures/imports/nested-outer.md": {
+      "mtime": 1765208947032,
+      "size": 73,
+      "contentHash": "aa5e9092793d2080550fb33978b47d2113120fcb485d65f6e09bf2407cfdf276",
+      "isBinary": false,
+      "tokens": 16
+    },
+    "test/fixtures/imports/types.ts": {
+      "mtime": 1765208947032,
+      "size": 644,
+      "contentHash": "a633f73d3b8f2c61f98731823e1b5911a8a0e21ffc37ca88a0d170bbb174e0d6",
+      "isBinary": false,
+      "tokens": 154
+    },
+    "test/fixtures/imports/lines.txt": {
+      "mtime": 1765208947032,
+      "size": 249,
+      "contentHash": "8bd72fd7e2a24e73c2adb777842b1dc0c6bcbf39c65cc8e3ef03690cad654380",
+      "isBinary": false,
+      "tokens": 79
+    },
+    "test/fixtures/imports/glob-test/c.js": {
+      "mtime": 1765208947031,
+      "size": 77,
+      "contentHash": "ac1d24a54576f2921686123ac16f207cda23db010ba1c3873a88cd774226108f",
+      "isBinary": false,
+      "tokens": 21
+    },
+    "test/fixtures/imports/glob-test/a.ts": {
+      "mtime": 1765208947031,
+      "size": 39,
+      "contentHash": "d8def70dda674f5c831e9a14431f124c761d815e1d21b5872509a73faae65ffd",
+      "isBinary": false,
+      "tokens": 12
+    },
+    "test/fixtures/imports/glob-test/b.ts": {
+      "mtime": 1765208947031,
+      "size": 38,
+      "contentHash": "42e0166373e31c1e0a5b64471b590ef25a7f841a1be9610d282342d6c9001826",
+      "isBinary": false,
+      "tokens": 12
+    },
+    "test/fixtures/imports/helper.md": {
+      "mtime": 1765208947031,
+      "size": 46,
+      "contentHash": "7fb1308ef363a64b8afbb8a8abbfc417f5432f5bf1ce11dba7bec63f49895d5e",
+      "isBinary": false,
+      "tokens": 9
+    },
+    "test/fixtures/line-range.claude.md": {
+      "mtime": 1765208947032,
+      "size": 121,
+      "contentHash": "127552e8a30896661034e9f184c6ef864bafd5fbb8cb3124fba277a05daeae76",
+      "isBinary": false,
+      "tokens": 36
+    },
+    "test/fixtures/command-substitution.claude.md": {
+      "mtime": 1765208947030,
+      "size": 107,
+      "contentHash": "e36b1ec6cf237795be14db405d69a64204fc2aee29d8fbc818cac229efbb7d1a",
+      "isBinary": false,
+      "tokens": 25
+    },
+    "test/fixtures/glob-import.claude.md": {
+      "mtime": 1765208947031,
+      "size": 142,
+      "contentHash": "14ed0e32e3206832298c6e7b257e8901f7f87a507f9b65b9d5a4b3a5989fe520",
+      "isBinary": false,
+      "tokens": 32
+    },
+    "test/fixtures/template-vars.claude.md": {
+      "mtime": 1765208947032,
+      "size": 302,
+      "contentHash": "2e1cf72184d9d2fd4a84be872e1cbd4716851800ac6badee46cb92d089ec7bad",
+      "isBinary": false,
+      "tokens": 76
+    },
+    "instructions/HELLO_WORLD.md": {
+      "mtime": 1765084855415,
+      "size": 67,
+      "contentHash": "88c50849b61364f707667c27cb36b7cc41dd2071713a5580cf5083803712f9c0",
+      "isBinary": false,
+      "tokens": 18
+    },
+    "instructions/SETUP_NPM_PUBLISHING.md": {
+      "mtime": 1765055324982,
+      "size": 1677,
+      "contentHash": "576213ed74345c455f13a9d42d9432688f5fdb16e13dd1b1f5443fa65d7d7f6a",
+      "isBinary": false,
+      "tokens": 431
+    },
+    "instructions/README.md": {
+      "mtime": 1765208947038,
+      "size": 1042,
+      "contentHash": "46ec141c24d2b6b3a6e0ea2e07994fc8599d39ef870fe9829200792b5f3859bf",
+      "isBinary": false,
+      "tokens": 289
+    },
+    "instructions/CHECK_ACTIONS.md": {
+      "mtime": 1765208947037,
+      "size": 329,
+      "contentHash": "19aa40981fa38e27da0d9de18798e51e8c475f8dac2f34bdff3bf1207a0aef46",
+      "isBinary": false,
+      "tokens": 89
+    },
+    "instructions/CREATE_INSTRUCTIONS.md": {
+      "mtime": 1765208947037,
+      "size": 1940,
+      "contentHash": "2e3e6d7f5ae7d28c199d6056b110b75cf76eb7eb56d2d18a0d38ad077df33563",
+      "isBinary": false,
+      "tokens": 502
+    }
+  }
+}
