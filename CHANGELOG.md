@@ -1,3 +1,10 @@
+# [2.21.0](https://github.com/johnlindquist/mdflow/compare/v2.20.0...v2.21.0) (2025-12-10)
+
+
+### Features
+
+* support template variables in inline commands (!`cmd`) ([902954e](https://github.com/johnlindquist/mdflow/commit/902954ee214c2a10105fcb914940142271dbd98a))
+
 # [2.20.0](https://github.com/johnlindquist/mdflow/compare/v2.19.1...v2.20.0) (2025-12-10)
 
 
