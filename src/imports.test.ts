@@ -483,6 +483,60 @@ test("expandImports preserves normal shell commands", async () => {
   expect(result).toContain("hello.txt");
 });
 
+// Template variable substitution in commands
+describe("template variables in commands", () => {
+  test("substitutes template variables in command strings", async () => {
+    const content = "!`echo {{ _name }}`";
+    const result = await expandImports(content, testDir, new Set(), false, {
+      templateVars: { _name: "John" },
+    });
+    expect(result).toContain("John");
+  });
+
+  test("substitutes multiple template variables", async () => {
+    const content = "!`echo {{ _greeting }} {{ _name }}`";
+    const result = await expandImports(content, testDir, new Set(), false, {
+      templateVars: { _greeting: "Hello", _name: "World" },
+    });
+    expect(result).toContain("Hello World");
+  });
+
+  test("handles undefined variables gracefully (empty string)", async () => {
+    // When a variable exists but the referenced one doesn't, LiquidJS renders empty
+    const content = "!`echo 'prefix{{ _undefined }}suffix'`";
+    const result = await expandImports(content, testDir, new Set(), false, {
+      templateVars: { _name: "exists" }, // At least one var so substitution runs
+    });
+    expect(result).toContain("prefixsuffix");
+  });
+
+  test("does not substitute when templateVars not provided", async () => {
+    const content = "!`echo '{{ _name }}'`";
+    const result = await expandImports(content, testDir);
+    // Without templateVars, the literal {{ _name }} is passed to echo
+    expect(result).toContain("{{ _name }}");
+  });
+
+  test("combines with _stdin variable", async () => {
+    const content = "!`echo '{{ _stdin }}'`";
+    const result = await expandImports(content, testDir, new Set(), false, {
+      templateVars: { _stdin: "piped-content" },
+    });
+    expect(result).toContain("piped-content");
+  });
+
+  test("protects command output from template interpretation", async () => {
+    // Command outputs {{ foo }} - should be wrapped in {% raw %} and not interpreted
+    const content = "!`echo '{{ output }}'`";
+    const result = await expandImports(content, testDir, new Set(), false, {
+      templateVars: {},
+    });
+    // Output should be wrapped in {% raw %}...{% endraw %}
+    expect(result).toContain("{% raw %}");
+    expect(result).toContain("{% endraw %}");
+  });
+});
+
 // Parallel resolution tests
 describe("parallel import resolution", () => {
   test("resolves multiple file imports in parallel", async () => {

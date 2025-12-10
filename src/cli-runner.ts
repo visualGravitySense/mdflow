@@ -337,8 +337,11 @@ export class CliRunner {
     if (hasImports(rawBody)) {
       try {
         const commandCwd = cwdFromCli ?? (frontmatter._cwd as string | undefined) ?? this.cwd;
-        getImportLogger().debug({ fileDir, commandCwd }, "Expanding imports");
-        expandedBody = await expandImports(rawBody, fileDir, new Set(), false, { invocationCwd: commandCwd });
+        getImportLogger().debug({ fileDir, commandCwd, templateVarCount: Object.keys(templateVars).length }, "Expanding imports");
+        expandedBody = await expandImports(rawBody, fileDir, new Set(), false, {
+          invocationCwd: commandCwd,
+          templateVars,
+        });
         getImportLogger().debug({ originalLength: rawBody.length, expandedLength: expandedBody.length }, "Imports expanded");
       } catch (err) {
         getImportLogger().error({ error: (err as Error).message }, "Import expansion failed");

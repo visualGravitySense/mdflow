@@ -7,6 +7,7 @@ import { resilientFetch } from "./fetch";
 import { MAX_INPUT_SIZE, FileSizeLimitError, exceedsLimit } from "./limits";
 import { countTokens, getContextLimit } from "./tokenizer";
 import { Semaphore, DEFAULT_CONCURRENCY_LIMIT } from "./concurrency";
+import { substituteTemplateVars } from "./template";
 
 // Re-export pipeline components for direct access
 export { parseImports, hasImportsInContent, isGlobPattern, parseLineRange, parseSymbolExtraction } from "./imports-parser";
@@ -60,6 +61,12 @@ export interface ImportContext {
    * This allows agents in ~/.mdflow to execute commands in the user's invocation directory.
    */
   invocationCwd?: string;
+  /**
+   * Template variables for substitution in inline commands (!`cmd`).
+   * When provided, {{ _varname }} patterns in command strings are substituted
+   * before execution, allowing dynamic command construction.
+   */
+  templateVars?: Record<string, string>;
 }
 
 /**
@@ -765,14 +772,24 @@ async function processCommandInline(
   verbose: boolean,
   importCtx?: ImportContext
 ): Promise<string> {
+  // Substitute template variables in command string if provided
+  // This allows commands like !`echo {{ _name }}` to use frontmatter variables
+  let processedCommand = command;
+  if (importCtx?.templateVars && Object.keys(importCtx.templateVars).length > 0) {
+    processedCommand = substituteTemplateVars(command, importCtx.templateVars);
+    if (processedCommand !== command) {
+      console.error(`[imports] Command with vars: ${command} → ${processedCommand}`);
+    }
+  }
+
   // Auto-prefix markdown files with `mdflow` to run them as agents
-  let actualCommand = command;
-  if (isMarkdownFileCommand(command)) {
-    actualCommand = `mdflow ${command}`;
+  let actualCommand = processedCommand;
+  if (isMarkdownFileCommand(processedCommand)) {
+    actualCommand = `mdflow ${processedCommand}`;
     console.error(`[imports] Auto-running .md file with mdflow: ${actualCommand}`);
   } else {
     // Always log command execution to stderr for visibility
-    console.error(`[imports] Executing: ${command}`);
+    console.error(`[imports] Executing: ${processedCommand}`);
   }
 
   // Use importCtx.env if provided, otherwise fall back to process.env
