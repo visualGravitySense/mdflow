@@ -1,11 +1,16 @@
 ---
-# Named template variables with defaults - CLI flags override
-# Usage: ma template-args.claude.md
-# Or override: ma template-args.claude.md --feature_name "CustomFeature"
-$feature_name: Authentication
-$target_dir: src/features
+# Template variables with defaults - CLI flags override
+# Usage: md template-args.claude.md
+# Override: md template-args.claude.md --_feature_name "Payments" --_target_dir "src/billing"
+_feature_name: Authentication
+_target_dir: src/features
 model: sonnet
 print: true
 ---
 
-Write a haiku about {{ feature_name }} in {{ target_dir }}.
+Create a new feature called "{{ _feature_name }}" in {{ _target_dir }}.
+
+Include:
+- A main module file
+- Unit tests
+- README documentation

@@ -1,6 +1,8 @@
 ---
-# Command inferred from filename: hello.claude.md → claude
+# Basic example - command inferred from filename
+# Usage: md hello.claude.md
 model: sonnet
+print: true
 ---
 
-Say "Hello from Claude!" and nothing else.
+Say "Hello from mdflow!" and nothing else.

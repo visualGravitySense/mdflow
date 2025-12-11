@@ -1,7 +1,8 @@
 ---
-# A practical example: Code review with file imports
-# Usage: ma review.claude.md
+# Code review with glob imports
+# Usage: md review.claude.md
 model: opus
+print: true
 ---
 
 Review the following code for:
