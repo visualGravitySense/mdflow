@@ -399,6 +399,10 @@ export class CliRunner {
     for (let i = 0; i < positionalCliArgs.length; i++) {
       templateVars[`_${i + 1}`] = positionalCliArgs[i];
     }
+    // Inject _args as all positional args formatted as a numbered list
+    if (positionalCliArgs.length > 0) {
+      templateVars["_args"] = positionalCliArgs.map((arg, i) => `${i + 1}. ${arg}`).join("\n");
+    }
     // Update remaining to only contain flag args (positionals consumed for templates)
     remaining = flagArgs;
 
