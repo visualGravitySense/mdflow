@@ -16,7 +16,14 @@ import {
 } from "@inquirer/core";
 import { readFileSync, existsSync } from "node:fs";
 import { homedir } from "os";
+import { spawnSync } from "node:child_process";
 import type { AgentFile } from "./cli";
+
+/** Result from file selector - either a path to run or edit */
+export interface FileSelectorResult {
+  action: "run" | "edit";
+  path: string;
+}
 
 // Extended key event type (runtime has more properties than type declares)
 interface ExtendedKeyEvent extends KeypressEvent {
@@ -202,7 +209,7 @@ export interface FileSelectorConfig {
 /**
  * Interactive file selector with preview pane
  */
-export const fileSelector = createPrompt<string, FileSelectorConfig>(
+export const fileSelector = createPrompt<FileSelectorResult, FileSelectorConfig>(
   (config, done) => {
     const { files, pageSize = 15 } = config;
     const prefix = usePrefix({ status: "idle", theme: makeTheme({}) });
@@ -226,7 +233,15 @@ export const fileSelector = createPrompt<string, FileSelectorConfig>(
       const extKey = key as ExtendedKeyEvent;
       if (isEnterKey(key)) {
         if (currentFile) {
-          done(currentFile.path);
+          done({ action: "run", path: currentFile.path });
+        }
+        return;
+      }
+
+      // Ctrl+E to edit the file in $EDITOR
+      if (key.ctrl && key.name === "e") {
+        if (currentFile) {
+          done({ action: "edit", path: currentFile.path });
         }
         return;
       }
@@ -385,12 +400,59 @@ export const fileSelector = createPrompt<string, FileSelectorConfig>(
     // Help line
     outputLines.push("");
     outputLines.push(
-      `\x1b[90m↑↓ navigate  PgUp/PgDn scroll preview  Enter select  Esc clear filter\x1b[0m`
+      `\x1b[90m↑↓ navigate  PgUp/PgDn scroll preview  Enter run  Ctrl+E edit  Esc clear filter\x1b[0m`
     );
 
     return outputLines.join("\n");
   }
 );
+
+/**
+ * Open a file in the user's $EDITOR
+ * Returns true if successful, false if editor not configured or failed
+ */
+function openInEditor(filePath: string): boolean {
+  const editor = process.env.EDITOR || process.env.VISUAL;
+
+  if (!editor) {
+    console.error(
+      "\x1b[33mNo $EDITOR environment variable set.\x1b[0m\n" +
+      "Set it in your shell config (e.g., ~/.bashrc or ~/.zshrc):\n" +
+      "  export EDITOR=vim\n" +
+      "  export EDITOR=nano\n" +
+      "  export EDITOR=\"code --wait\"\n"
+    );
+    return false;
+  }
+
+  try {
+    // Parse editor command (may include flags like "code --wait")
+    const parts = editor.split(/\s+/);
+    const cmd = parts[0]!;
+    const args = [...parts.slice(1), filePath];
+
+    const result = spawnSync(cmd, args, {
+      stdio: "inherit",
+      shell: false,
+    });
+
+    if (result.error) {
+      console.error(
+        `\x1b[31mFailed to open editor "${editor}":\x1b[0m ${result.error.message}\n` +
+        "Check that your $EDITOR is installed and in your PATH."
+      );
+      return false;
+    }
+
+    return result.status === 0;
+  } catch (error) {
+    console.error(
+      `\x1b[31mFailed to open editor "${editor}":\x1b[0m ${error}\n` +
+      "Check that your $EDITOR is installed and in your PATH."
+    );
+    return false;
+  }
+}
 
 /**
  * Show interactive file picker with preview and return selected file path
@@ -402,15 +464,28 @@ export async function showFileSelectorWithPreview(
     return undefined;
   }
 
-  try {
-    const selected = await fileSelector({
-      message: "Select an agent to run:",
-      files,
-      pageSize: 15,
-    });
-    return selected;
-  } catch {
-    // User cancelled (Ctrl+C) or other error
-    return undefined;
+  // Loop to allow editing and returning to selector
+  while (true) {
+    try {
+      const result = await fileSelector({
+        message: "Select an agent to run:",
+        files,
+        pageSize: 15,
+      });
+
+      if (result.action === "edit") {
+        // Open in editor, then return to selector
+        openInEditor(result.path);
+        // Clear file content cache so preview reflects edits
+        fileContentCache.clear();
+        continue;
+      }
+
+      // action === "run"
+      return result.path;
+    } catch {
+      // User cancelled (Ctrl+C) or other error
+      return undefined;
+    }
   }
 }
