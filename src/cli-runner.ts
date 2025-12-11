@@ -377,6 +377,31 @@ export class CliRunner {
       }
     }
 
+    // Inject positional CLI args as template variables (_1, _2, etc.)
+    // First, separate flags from positional args in remaining
+    const positionalCliArgs: string[] = [];
+    const flagArgs: string[] = [];
+    for (let i = 0; i < remaining.length; i++) {
+      const arg = remaining[i];
+      if (arg.startsWith("-")) {
+        // It's a flag - include it and its value if present
+        flagArgs.push(arg);
+        if (i + 1 < remaining.length && !remaining[i + 1].startsWith("-")) {
+          flagArgs.push(remaining[++i]);
+        }
+      } else {
+        // It's a positional arg
+        positionalCliArgs.push(arg);
+      }
+    }
+    // Inject positional args as _1, _2, etc. template variables
+    // Uses underscore prefix to match other template var conventions
+    for (let i = 0; i < positionalCliArgs.length; i++) {
+      templateVars[`_${i + 1}`] = positionalCliArgs[i];
+    }
+    // Update remaining to only contain flag args (positionals consumed for templates)
+    remaining = flagArgs;
+
     // Expand imports
     let expandedBody = rawBody;
     const fileDir = dirname(resolve(localFilePath));
