@@ -1,3 +1,10 @@
+# [2.24.0](https://github.com/johnlindquist/mdflow/compare/v2.23.0...v2.24.0) (2025-12-11)
+
+
+### Features
+
+* add _args template variable for numbered list of all positional args ([9d7b93f](https://github.com/johnlindquist/mdflow/commit/9d7b93f6dd4b876be7f64dc4a7f855d24337ac21))
+
 # [2.23.0](https://github.com/johnlindquist/mdflow/compare/v2.22.0...v2.23.0) (2025-12-11)
 
 
