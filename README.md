@@ -161,6 +161,54 @@ mdflow create.claude.md --_feature_name "Payments" --_target_dir "src/billing"
 
 The `--_feature_name` and `--_target_dir` flags are consumed by mdflow for template substitution—they won't be passed to the command.
 
+**No frontmatter declaration required:** You can pass `--_varname` flags without declaring them in frontmatter. If the variable is used in the body but not provided, you'll be prompted for it:
+
+```yaml
+---
+print: true
+---
+{% if _verbose == "yes" %}Detailed analysis:{% endif %}
+Review this code: {{ _target }}
+```
+
+```bash
+mdflow review.claude.md --_verbose yes --_target "./src"
+```
+
+### Positional Arguments as Template Variables
+
+CLI positional arguments are available as `{{ _1 }}`, `{{ _2 }}`, etc.:
+
+```yaml
+---
+print: true
+---
+Translate "{{ _1 }}" to {{ _2 }}.
+```
+
+```bash
+mdflow translate.claude.md "hello world" "French"
+# → Translate "hello world" to French.
+```
+
+Use `{{ _args }}` to get all positional args as a numbered list:
+
+```yaml
+---
+print: true
+---
+Process these items:
+{{ _args }}
+```
+
+```bash
+mdflow process.claude.md "apple" "banana" "cherry"
+# → Process these items:
+# → 1. apple
+# → 2. banana
+# → 3. cherry
+```
+
 ### `_stdin` - Piped Input
 
 When you pipe content to mdflow, it's available as the `_stdin` template variable:
@@ -191,6 +239,14 @@ cat README.md | mdflow summarize.claude.md
 | `_interactive` / `_i` | boolean | Enable interactive mode (overrides print-mode defaults) |
 | `_subcommand` | string/string[] | Prepend subcommand(s) to CLI args |
 | `_cwd` | string | Override working directory for inline commands |
+
+### Auto-Injected Template Variables
+
+| Variable | Description |
+|----------|-------------|
+| `{{ _stdin }}` | Content piped to mdflow |
+| `{{ _1 }}`, `{{ _2 }}`... | Positional CLI arguments |
+| `{{ _args }}` | All positional args as numbered list (1. arg1, 2. arg2, ...) |
 
 ### All Other Keys → CLI Flags
 

@@ -93,11 +93,15 @@ Commands are resolved in priority order:
 **System keys** (consumed by md, not passed to command):
 - `_varname`: Template variables (e.g., `_name: "default"` → `{{ _name }}` in body → `--_name` CLI flag)
 - `_stdin`: Auto-injected template variable containing piped input
+- `_1`, `_2`, etc.: Auto-injected positional CLI args (e.g., `md task.md "foo"` → `{{ _1 }}` = "foo")
+- `_args`: Auto-injected numbered list of all positional args
 - `env` (object form): Sets process.env before execution
 - `$1`, `$2`, etc.: Map positional args to flags
 - `_interactive`: Enable interactive mode (overrides print-mode defaults)
 - `_subcommand`: Prepend subcommand(s) to CLI args (e.g., `_subcommand: exec`)
 - `_cwd`: Override working directory for inline commands (`` !`cmd` ``)
+
+**Note:** `--_varname` CLI flags work without frontmatter declaration. If a `_` prefixed variable is used in the body but not provided, you'll be prompted for it.
 
 **All other keys** are passed directly as CLI flags:
 
