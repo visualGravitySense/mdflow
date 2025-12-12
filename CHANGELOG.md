@@ -1,3 +1,16 @@
+# [2.29.0](https://github.com/johnlindquist/mdflow/compare/v2.28.0...v2.29.0) (2025-12-12)
+
+
+### Bug Fixes
+
+* resolve all TypeScript strict null check errors ([fed464a](https://github.com/johnlindquist/mdflow/commit/fed464a95706d029bb4dde3610b43355d6e6229e))
+
+
+### Features
+
+* add parallel command dashboard and standardize internal flags ([d431196](https://github.com/johnlindquist/mdflow/commit/d43119601fb6b108d55badbf0f769a6778a8a2da))
+* show spinner dashboard for single inline commands too ([8c44e0c](https://github.com/johnlindquist/mdflow/commit/8c44e0c3fe4328111ad3ccb3a80b58432a6b564d))
+
 # [2.28.0](https://github.com/johnlindquist/mdflow/compare/v2.27.1...v2.28.0) (2025-12-12)
 
 
