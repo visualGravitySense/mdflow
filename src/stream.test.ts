@@ -11,7 +11,7 @@ import {
 /**
  * Helper to create a readable stream from a string
  */
-function stringToStream(str: string): ReadableStream<Uint8Array> {
+function createWebStream(str: string): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   return new ReadableStream({
     start(controller) {
@@ -42,7 +42,7 @@ function chunkedStream(chunks: string[]): ReadableStream<Uint8Array> {
 describe("stream utilities", () => {
   describe("teeStream", () => {
     it("produces two independent streams with identical content", async () => {
-      const source = stringToStream("Hello, World!");
+      const source = createWebStream("Hello, World!");
       const [streamA, streamB] = teeStream(source);
 
       // Collect both streams independently
@@ -70,7 +70,7 @@ describe("stream utilities", () => {
     });
 
     it("handles empty streams", async () => {
-      const source = stringToStream("");
+      const source = createWebStream("");
       const [streamA, streamB] = teeStream(source);
 
       const [contentA, contentB] = await Promise.all([
@@ -84,7 +84,7 @@ describe("stream utilities", () => {
 
     it("handles unicode content", async () => {
       const unicodeText = "Hello World! Emoji: \u{1F60A} \u{1F680}";
-      const source = stringToStream(unicodeText);
+      const source = createWebStream(unicodeText);
       const [streamA, streamB] = teeStream(source);
 
       const [contentA, contentB] = await Promise.all([
@@ -99,7 +99,7 @@ describe("stream utilities", () => {
 
   describe("collectStream", () => {
     it("collects single chunk stream to string", async () => {
-      const source = stringToStream("Test content");
+      const source = createWebStream("Test content");
       const result = await collectStream(source);
       expect(result).toBe("Test content");
     });
@@ -112,7 +112,7 @@ describe("stream utilities", () => {
 
     it("handles binary-like content with high bytes", async () => {
       const content = "Binary test: \x00\x01\x02\xFF";
-      const source = stringToStream(content);
+      const source = createWebStream(content);
       const result = await collectStream(source);
       // Note: TextDecoder may replace invalid sequences
       expect(result.length).toBeGreaterThan(0);
@@ -120,7 +120,7 @@ describe("stream utilities", () => {
 
     it("handles large content efficiently", async () => {
       const largeContent = "x".repeat(100_000);
-      const source = stringToStream(largeContent);
+      const source = createWebStream(largeContent);
       const result = await collectStream(source);
       expect(result.length).toBe(100_000);
     });
@@ -128,20 +128,20 @@ describe("stream utilities", () => {
 
   describe("pipeToStdout", () => {
     it("pipes content to stdout without throwing", async () => {
-      const source = stringToStream("stdout test");
+      const source = createWebStream("stdout test");
       // Should not throw
       await expect(pipeToStdout(source)).resolves.toBeUndefined();
     });
 
     it("handles empty stream", async () => {
-      const source = stringToStream("");
+      const source = createWebStream("");
       await expect(pipeToStdout(source)).resolves.toBeUndefined();
     });
   });
 
   describe("pipeToStderr", () => {
     it("pipes content to stderr without throwing", async () => {
-      const source = stringToStream("stderr test");
+      const source = createWebStream("stderr test");
       await expect(pipeToStderr(source)).resolves.toBeUndefined();
     });
   });
@@ -149,7 +149,7 @@ describe("stream utilities", () => {
   describe("teeToStdoutAndCollect", () => {
     it("returns collected content while piping to stdout", async () => {
       const content = "Tee test content";
-      const source = stringToStream(content);
+      const source = createWebStream(content);
       const result = await teeToStdoutAndCollect(source);
       expect(result).toBe(content);
     });
@@ -161,7 +161,7 @@ describe("stream utilities", () => {
     });
 
     it("handles empty stream", async () => {
-      const source = stringToStream("");
+      const source = createWebStream("");
       const result = await teeToStdoutAndCollect(source);
       expect(result).toBe("");
     });
@@ -170,7 +170,7 @@ describe("stream utilities", () => {
   describe("teeToStderrAndCollect", () => {
     it("returns collected content while piping to stderr", async () => {
       const content = "Stderr tee content";
-      const source = stringToStream(content);
+      const source = createWebStream(content);
       const result = await teeToStderrAndCollect(source);
       expect(result).toBe(content);
     });
@@ -180,7 +180,7 @@ describe("stream utilities", () => {
 describe("stream teeing integration", () => {
   it("tee produces identical content on both branches with async consumption", async () => {
     const originalContent = "Integration test: line 1\nline 2\nline 3\n";
-    const source = stringToStream(originalContent);
+    const source = createWebStream(originalContent);
     const [displayStream, captureStream] = teeStream(source);
 
     // Simulate async consumption at different rates

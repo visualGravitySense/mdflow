@@ -16,18 +16,18 @@
       "tokens": 1979
     },
     "src/imports.test.ts": {
-      "mtime": 1765261702126,
-      "size": 18324,
-      "contentHash": "5615fabfbd6306b1c3e469a74ce8a590c58c10f8b5ce45477980c45775ee5fd0",
+      "mtime": 1765356128152,
+      "size": 24960,
+      "contentHash": "45aedb5912332b7150affa566dd5024f9ef72d3a64ba4a0d7a547587c17ab2eb",
       "isBinary": false,
-      "tokens": 4467
+      "tokens": 6078
     },
     "src/command-builder.test.ts": {
-      "mtime": 1765208947027,
-      "size": 22369,
-      "contentHash": "4fb4458cb0fb6c47320c927ac86083d4e08264915c6be5aee259dc40d7ab6cc8",
+      "mtime": 1765307629686,
+      "size": 33092,
+      "contentHash": "e4a9fdb08f0faa8fcb0398d6f08970c1afb96c64ac50e9c98e70fbb77dcbf85d",
       "isBinary": false,
-      "tokens": 5455
+      "tokens": 8107
     },
     "src/cli.test.ts": {
       "mtime": 1765261708985,
@@ -44,11 +44,11 @@
       "tokens": 238
     },
     "src/runtime.test.ts": {
-      "mtime": 1765228369245,
-      "size": 20233,
-      "contentHash": "716bba21c339b024d8b2d3eae1793b7bbda428641886bc7942177469360728df",
+      "mtime": 1765310872848,
+      "size": 20219,
+      "contentHash": "254c766b07b2c8a4fbdcb897a12b51a9c06d407ba0b0b2940d386754e2279067",
       "isBinary": false,
-      "tokens": 4457
+      "tokens": 4466
     },
     "src/streams.ts": {
       "mtime": 1765208947029,
@@ -72,11 +72,11 @@
       "tokens": 2571
     },
     "src/dry-run.test.ts": {
-      "mtime": 1765261753020,
-      "size": 7559,
-      "contentHash": "739fec344af3b628342e4d1594cb6d1bbf9efe7576e39e567ac74a231531abc5",
+      "mtime": 1765310872848,
+      "size": 7569,
+      "contentHash": "9b301a828d712b503e0f3c81b1b9ffa370adcae080fde462c5195e74adb2ce49",
       "isBinary": false,
-      "tokens": 1917
+      "tokens": 1921
     },
     "src/fetch.test.ts": {
       "mtime": 1765262464628,
@@ -86,18 +86,18 @@
       "tokens": 2331
     },
     "src/imports-parser.ts": {
-      "mtime": 1765208924140,
-      "size": 4954,
-      "contentHash": "6e180fc71fa91647bc29da65d841f8825cb162e78662b96ead9aef7cc2ba6bd8",
+      "mtime": 1765307629687,
+      "size": 8984,
+      "contentHash": "529d76327a71ee76cbfb5d37d24bca244f0ae589e841e18d36771db380525c1a",
       "isBinary": false,
-      "tokens": 1248
+      "tokens": 2246
     },
     "src/config.ts": {
-      "mtime": 1765261124528,
-      "size": 12820,
-      "contentHash": "ad1bee82b50b4e026d6f3d401f4a935ab93af110547fa36e0b4635dc4da73fb0",
+      "mtime": 1765307629687,
+      "size": 11141,
+      "contentHash": "32e5a59d7f08161d490cc6192fa12280ac2814cff3630cabb688ecb6c0931c8c",
       "isBinary": false,
-      "tokens": 2940
+      "tokens": 2447
     },
     "src/env.ts": {
       "mtime": 1765084442007,
@@ -107,18 +107,18 @@
       "tokens": 1173
     },
     "src/system-environment.ts": {
-      "mtime": 1765208924133,
-      "size": 17958,
-      "contentHash": "d0db531088c747f26f227b2b5218663e06a97ed05fb8a1eef616119ab8a3393b",
+      "mtime": 1765511402959,
+      "size": 17963,
+      "contentHash": "6065dbfa1b0747e1ffd83f625463cf4334e1f020a99bc1f1d357ce448d2deaae",
       "isBinary": false,
-      "tokens": 4143
+      "tokens": 4145
     },
     "src/imports-resolver.ts": {
-      "mtime": 1765208924140,
-      "size": 9903,
-      "contentHash": "73c06c64accbe1331b1786ee4349fa168c5f53ebf9a5caca0700e085e762e580",
+      "mtime": 1765307625152,
+      "size": 10668,
+      "contentHash": "17c43ca96f6c42476f266106b5437cb45f5794a0893322483f318eb045bff864",
       "isBinary": false,
-      "tokens": 2484
+      "tokens": 2626
     },
     "src/limits.test.ts": {
       "mtime": 1765261759489,
@@ -135,11 +135,11 @@
       "tokens": 1715
     },
     "src/index.ts": {
-      "mtime": 1765261124529,
-      "size": 20203,
-      "contentHash": "f7cafd6996d9aaed32e3b6f30e8a5dbdc82137d368e3fb5ba3d6933269b6ad62",
+      "mtime": 1765307629687,
+      "size": 1131,
+      "contentHash": "b9115c5df8b561e681b221f8bce91b6b7a72378ac6d270f14f16a05032fb101a",
       "isBinary": false,
-      "tokens": 4621
+      "tokens": 286
     },
     "src/ui.test.ts": {
       "mtime": 1765261124531,
@@ -156,11 +156,11 @@
       "tokens": 414
     },
     "src/remote.ts": {
-      "mtime": 1765262464629,
-      "size": 3292,
-      "contentHash": "e316567598382f6f25bfcc94430f0e5bc8a8e2c7584311b87772d412d2fce087",
+      "mtime": 1765307625156,
+      "size": 4700,
+      "contentHash": "15e79dde9a3032f14f1a7e8c6fb1795a27b42cb5f7a83bc0cff39963c97943f0",
       "isBinary": false,
-      "tokens": 822
+      "tokens": 1162
     },
     "src/ui.ts": {
       "mtime": 1765208947030,
@@ -170,9 +170,9 @@
       "tokens": 1702
     },
     "src/stream.test.ts": {
-      "mtime": 1765170893002,
-      "size": 6691,
-      "contentHash": "74ee2efe5fc2dfe93fc86f18642386ce228d7716ff7c94dce137e74698eaa5eb",
+      "mtime": 1765511402959,
+      "size": 6705,
+      "contentHash": "d98fa7e9ebb36138bd0c6c342851c3a533dfe5bf769ec995a724e2ac1229338c",
       "isBinary": false,
       "tokens": 1536
     },
@@ -191,11 +191,11 @@
       "tokens": 4044
     },
     "src/remote.test.ts": {
-      "mtime": 1765133140094,
-      "size": 1842,
-      "contentHash": "c7ed8141e44926e99de8fa68e76e632710b791044c37ab5ff03af243ce0a2b53",
+      "mtime": 1765307625156,
+      "size": 4513,
+      "contentHash": "b5eb113e4854c6c36a238ac6a2b5b48eb4e15a6ed303a88bde2787fc6bf2c316",
       "isBinary": false,
-      "tokens": 480
+      "tokens": 1105
     },
     "src/streams.test.ts": {
       "mtime": 1765261777005,
@@ -219,11 +219,11 @@
       "tokens": 2806
     },
     "src/file-selector.ts": {
-      "mtime": 1765288598485,
-      "size": 11605,
-      "contentHash": "13831278bcb775d02be07c20d853dc335265795df4de4810578f32c91c2e5d4a",
+      "mtime": 1765511402948,
+      "size": 13847,
+      "contentHash": "1752b2c23f47cb7528b6332d4ee13713117d233cb0b517647284c78240d7ebf4",
       "isBinary": false,
-      "tokens": 2981
+      "tokens": 3565
     },
     "src/logger.ts": {
       "mtime": 1765261124530,
@@ -233,18 +233,18 @@
       "tokens": 723
     },
     "src/types.ts": {
-      "mtime": 1765262464629,
-      "size": 5343,
-      "contentHash": "96ec5a9a9e89edfb496810c11c55c52948670c30a1437ac86355cdea53c03bb7",
+      "mtime": 1765307629687,
+      "size": 6294,
+      "contentHash": "981a393f0b1e98a7327b9c785cdac0ed14cf16aa30bb8a7f78f77333a855b504",
       "isBinary": false,
-      "tokens": 1237
+      "tokens": 1446
     },
     "src/runtime.ts": {
-      "mtime": 1765208947028,
-      "size": 20776,
-      "contentHash": "cf74282ec35fd53e89ac507a7416be2ace430f765bb8c25b6e2683e83c17cefe",
+      "mtime": 1765313723882,
+      "size": 20115,
+      "contentHash": "f063714425211586da77b7c42d48d0587062b5d221d5cf8504fe21d1009fd256",
       "isBinary": false,
-      "tokens": 4568
+      "tokens": 4391
     },
     "src/stream.ts": {
       "mtime": 1765170893002,
@@ -254,18 +254,18 @@
       "tokens": 760
     },
     "src/smoke-pipe.test.ts": {
-      "mtime": 1765261791883,
-      "size": 6388,
-      "contentHash": "71bcf5c8581bce93843158d87e5e65021f5b61c5ac9b1d308240b624b100ad22",
+      "mtime": 1765310872848,
+      "size": 6373,
+      "contentHash": "b9044bd1a070f741d67710e7ff350f4ad306f6663606ca691fd62f0016c51d0e",
       "isBinary": false,
-      "tokens": 1624
+      "tokens": 1631
     },
     "src/imports.ts": {
-      "mtime": 1765264782824,
-      "size": 29287,
-      "contentHash": "9fb15d41c2efbd06fc317f6a30dd43e7c9c1ca4bad12e21d4835394aa132b72e",
+      "mtime": 1765356777695,
+      "size": 32156,
+      "contentHash": "980c3fe9535849262e5a4194f071c3043bb74fa8588d309ebd30fcd0adfe1104",
       "isBinary": false,
-      "tokens": 7160
+      "tokens": 7766
     },
     "src/snapshot.test.ts": {
       "mtime": 1765262464629,
@@ -282,11 +282,11 @@
       "tokens": 1728
     },
     "src/stdin-abstraction.test.ts": {
-      "mtime": 1765208947029,
-      "size": 11757,
-      "contentHash": "0655fb6b2d6bf7305126d30ed8c47e9527e6d84064b34bfe2ba0b9822f3fd728",
+      "mtime": 1765310872848,
+      "size": 11401,
+      "contentHash": "dda91af50360fdbddc451159d95cdcd777605d073a2e89bf8ddcb71bbf9207b0",
       "isBinary": false,
-      "tokens": 2677
+      "tokens": 2589
     },
     "src/crash-log.test.ts": {
       "mtime": 1765261799055,
@@ -324,25 +324,25 @@
       "tokens": 660
     },
     "src/imports-parser.test.ts": {
-      "mtime": 1765208924140,
-      "size": 18796,
-      "contentHash": "5bae1eae1daf183e5f25116555bd1d54f167a1d4622fc2a4fa2337c6bc16e4ef",
+      "mtime": 1765307629687,
+      "size": 25028,
+      "contentHash": "707017bb3f5d502942d77cf71e78f85b8012d101012b98947f89fd4c0d936368",
       "isBinary": false,
-      "tokens": 4724
+      "tokens": 6341
     },
     "src/setup.ts": {
-      "mtime": 1765289193961,
-      "size": 13302,
-      "contentHash": "dc533dd8e37874a50b27054bec108dbf54a6b7a970a6c0d5b3b9d370518309ba",
+      "mtime": 1765446301495,
+      "size": 13655,
+      "contentHash": "f23391810bc162e5af8ccfd3c919e3985b85e6b04d93e08c8c5faacb2ffdd935",
       "isBinary": false,
-      "tokens": 3531
+      "tokens": 3648
     },
     "src/context.ts": {
-      "mtime": 1765208947028,
-      "size": 7103,
-      "contentHash": "58874b3b352b8993b5551050ba67883a49754c2b357a82718f99fe09c7abd23c",
+      "mtime": 1765307629687,
+      "size": 6938,
+      "contentHash": "e1d19c1a797ae44ddaadb1867ca5192121f42d5894b1b35b93c7465eaec4dd9a",
       "isBinary": false,
-      "tokens": 1731
+      "tokens": 1675
     },
     "src/trust.test.ts": {
       "mtime": 1765261124530,
@@ -352,18 +352,18 @@
       "tokens": 1277
     },
     "src/cli.ts": {
-      "mtime": 1765288598485,
-      "size": 7924,
-      "contentHash": "d4e98da2a048a36b36801eafc8b1f633b3a14acaad97f05b9641bf1bd2a63aa4",
+      "mtime": 1765307625155,
+      "size": 7991,
+      "contentHash": "695cd259189b3dd9806f42466191f7281e7dbcb048d392721084b5103f8a0d24",
       "isBinary": false,
-      "tokens": 1932
+      "tokens": 1948
     },
     "src/command-builder.ts": {
-      "mtime": 1765208947027,
-      "size": 8068,
-      "contentHash": "e1fec57ccba742ef17eec354279be9aea261c53c7d865f43a327156b2cbbfdf5",
+      "mtime": 1765307629686,
+      "size": 10242,
+      "contentHash": "54c6f4fc525323e028863201e0eda902114d64494ac8cf6d50ca549753373cf8",
       "isBinary": false,
-      "tokens": 1881
+      "tokens": 2382
     },
     "src/environment.ts": {
       "mtime": 1765208947028,
@@ -485,25 +485,25 @@
       "tokens": 192
     },
     "CLAUDE.md": {
-      "mtime": 1765261124527,
-      "size": 5612,
-      "contentHash": "d8eafb6951abcef69d487909d9543ba42adb86d0c3c9667d5f057b65cda2fff8",
+      "mtime": 1765511863746,
+      "size": 6382,
+      "contentHash": "772b6959de47afdecc18094255bb4683617ca09c2bb9c9119c1e4a3a727deed4",
       "isBinary": false,
-      "tokens": 1451
+      "tokens": 1676
     },
     "examples/hello.copilot.md": {
-      "mtime": 1765131281106,
-      "size": 44,
-      "contentHash": "58c75423707dd432295d956717e982f0117e32e30bb396480b1e5701d2910ee3",
+      "mtime": 1765451290296,
+      "size": 128,
+      "contentHash": "dcd6fbd252567d5d3bf5bf8ed5dacc52b8aea37ade8d2eb5c3ebeec7f00b7389",
       "isBinary": false,
-      "tokens": 11
+      "tokens": 33
     },
     "examples/commit.claude.md": {
-      "mtime": 1765131095439,
-      "size": 325,
-      "contentHash": "bb1c956948eeb3ca6b932847322b0be2f50985d09b62d7f66effa4fca72fdce5",
+      "mtime": 1765451278834,
+      "size": 342,
+      "contentHash": "c51bcdec96bfde8ac15feba27583e0a38f6bd7b18ea764a1157c29412edc1ef4",
       "isBinary": false,
-      "tokens": 80
+      "tokens": 83
     },
     "examples/yolo.gemini.md": {
       "mtime": 1765132334760,
@@ -534,11 +534,11 @@
       "tokens": 70
     },
     "examples/template-args.claude.md": {
-      "mtime": 1765133643432,
-      "size": 322,
-      "contentHash": "82812e4b74a1b3c6aae0531a54f96966465f56290e1566aaced5d3d98f83a4b4",
+      "mtime": 1765451278727,
+      "size": 416,
+      "contentHash": "5ee77be8ca1561e6596bbcebfec4355b1a6ea99b5b84e15850f5db273a4602e3",
       "isBinary": false,
-      "tokens": 81
+      "tokens": 104
     },
     "examples/env-flags.claude.md": {
       "mtime": 1765131095279,
@@ -548,25 +548,25 @@
       "tokens": 57
     },
     "examples/hello.claude.md": {
-      "mtime": 1765131073894,
-      "size": 127,
-      "contentHash": "8425c5ad003807093a001dd68135b6991926d17e9ba3a81130ab61894b7933f2",
+      "mtime": 1765451285670,
+      "size": 155,
+      "contentHash": "b7b69b2db9c7c87e1e5273168259881e0de72cb70aa3925cb0e3f1f73c73319c",
       "isBinary": false,
-      "tokens": 32
+      "tokens": 41
     },
     "examples/review.claude.md": {
-      "mtime": 1765131095529,
-      "size": 260,
-      "contentHash": "d65d974cc89a2ff4dd8608c408b5bb2f3f45d0513371536de5fa89a8c02436a6",
+      "mtime": 1765451278944,
+      "size": 251,
+      "contentHash": "0997714484b827201daa0b80d3bc759fdbc2c5bcaffff89d6d77d11ce990bd17",
       "isBinary": false,
       "tokens": 61
     },
     "examples/positional-map.copilot.md": {
-      "mtime": 1765131095359,
-      "size": 197,
-      "contentHash": "6130db1ef15b28cf3aa94e8a06b6d0759686d997016427c13c620a9ef89af682",
+      "mtime": 1765451565685,
+      "size": 237,
+      "contentHash": "1c06c7c88d257c8843c9a0d9510ea0375c9044e83e3a9d81c8cf4a7a50e4f557",
       "isBinary": false,
-      "tokens": 54
+      "tokens": 69
     },
     "examples/local-llm.codex.md": {
       "mtime": 1765131074109,
@@ -576,18 +576,18 @@
       "tokens": 57
     },
     "package.json": {
-      "mtime": 1765289193959,
+      "mtime": 1765511402944,
       "size": 1084,
-      "contentHash": "35bec46f620ec17a2b128ae63333ed0d21179c361c00078ff952a422a980c054",
+      "contentHash": "a22327ac4ae01d461372ae1da07d93d57e4dc40bba3c573604b96bb076d19d56",
       "isBinary": false,
       "tokens": 392
     },
     "GUIDE.md": {
-      "mtime": 1765208947037,
-      "size": 12608,
-      "contentHash": "ae1431c775d2438ef40c6e3d7fae18d4ec976aa659ba307be1e3c9418c1a349a",
+      "mtime": 1765310872847,
+      "size": 13011,
+      "contentHash": "a6258e6dfc3e186c18c9e44a6087f6d8ed9cb387860bd786713235742fd5c910",
       "isBinary": false,
-      "tokens": 3287
+      "tokens": 3398
     },
     "smoke-tests/test1.copilot.md": {
       "mtime": 1765078407072,
@@ -597,11 +597,11 @@
       "tokens": 59
     },
     "README.md": {
-      "mtime": 1765261124527,
-      "size": 12801,
-      "contentHash": "6e3f5ca81cf2f92e4d3a93f1d52b77e072aa0def7ae8079ab63c1adc42438fae",
+      "mtime": 1765451177219,
+      "size": 14976,
+      "contentHash": "ed320928c19c6eab9cb267839a9721f2c542a42219f2f7229a86c4e97814ca41",
       "isBinary": false,
-      "tokens": 3349
+      "tokens": 3954
     },
     "smoke-tests/test2.claude.md": {
       "mtime": 1765078013925,
@@ -639,11 +639,11 @@
       "tokens": 30
     },
     "CHANGELOG.md": {
-      "mtime": 1765289193958,
-      "size": 16637,
-      "contentHash": "13a2b3bcee8afdc0246f0c41250665dd4d4d8a8599e65c5087023612bbf50dfb",
+      "mtime": 1765511402944,
+      "size": 20250,
+      "contentHash": "90d58c44b812330e3d3fac452cb19f7488e0bbe23a1a6368c4ad6996b8db6722",
       "isBinary": false,
-      "tokens": 5799
+      "tokens": 7155
     },
     "test/fixtures/simple.claude.md": {
       "mtime": 1765208947032,
@@ -798,6 +798,251 @@
       "contentHash": "2e3e6d7f5ae7d28c199d6056b110b75cf76eb7eb56d2d18a0d38ad077df33563",
       "isBinary": false,
       "tokens": 502
+    },
+    "src/cli-runner.test.ts": {
+      "mtime": 1765310872847,
+      "size": 9256,
+      "contentHash": "9cec35f0f7dced979e76e8e5e3c152160f3d11a2a83fe8d180f8d41872adb490",
+      "isBinary": false,
+      "tokens": 2233
+    },
+    "src/cache.ts": {
+      "mtime": 1765307625155,
+      "size": 6570,
+      "contentHash": "fd8a334b526833735d4e74b86ee5c70033515ad19eda0bf7007a472f3f324c67",
+      "isBinary": false,
+      "tokens": 1577
+    },
+    "src/concurrency.ts": {
+      "mtime": 1765307625152,
+      "size": 2593,
+      "contentHash": "98c4791536f196b40a1dba869f2ed62187487d26151845dc97ee1acfd7f65815",
+      "isBinary": false,
+      "tokens": 577
+    },
+    "src/adapters/codex.ts": {
+      "mtime": 1765307629686,
+      "size": 731,
+      "contentHash": "4e2baf7273af8a62468ebe98afd8cd589b44ca1a648f4135e1ee4c5e7249f93a",
+      "isBinary": false,
+      "tokens": 168
+    },
+    "src/adapters/index.ts": {
+      "mtime": 1765511796112,
+      "size": 3662,
+      "contentHash": "ddf7ede1eea74e1385cf38c124e6dc8a083b5ef92df93ab289370fa69444e3e8",
+      "isBinary": false,
+      "tokens": 790
+    },
+    "src/adapters/claude.ts": {
+      "mtime": 1765307629686,
+      "size": 683,
+      "contentHash": "e8a2f250476e7ceecb21119b091caf72570cd9c5f66b1f36ea09b530c8623506",
+      "isBinary": false,
+      "tokens": 153
+    },
+    "src/adapters/copilot.ts": {
+      "mtime": 1765307629686,
+      "size": 762,
+      "contentHash": "3690341231be108bca5b97a07a342673d85cdc97b0b627a9ca5b9e9621fa5c7c",
+      "isBinary": false,
+      "tokens": 177
+    },
+    "src/adapters/gemini.ts": {
+      "mtime": 1765307629686,
+      "size": 699,
+      "contentHash": "3bbdd711107a15f6dfd29ffed5b7554edc20dfea9769e2311a2f3d44844ab59c",
+      "isBinary": false,
+      "tokens": 155
+    },
+    "src/adapters/droid.ts": {
+      "mtime": 1765511785686,
+      "size": 732,
+      "contentHash": "dc4349ec6d7af5618bfb44b892d7d2e70bfa855e1e5a6bf9f7d089e576ebb53e",
+      "isBinary": false,
+      "tokens": 167
+    },
+    "src/cli-runner.ts": {
+      "mtime": 1765451989746,
+      "size": 22850,
+      "contentHash": "b0fbc7de11d7b9520bc0f10e0553894968c67cdae8b5429795d34d9084a0cdfe",
+      "isBinary": false,
+      "tokens": 5404
+    },
+    "src/adapters/opencode.ts": {
+      "mtime": 1765511785778,
+      "size": 716,
+      "contentHash": "560f383c274dcfe578ef719d67d60c4195573a4e7488ab74d797a2bad1aa61fd",
+      "isBinary": false,
+      "tokens": 168
+    },
+    "src/adapters/adapters.test.ts": {
+      "mtime": 1765511843402,
+      "size": 8562,
+      "contentHash": "d127f9ec3839e3dc6862a15608cacb7e9fc6abd0b1b6d8a432a8156c55e2b2d1",
+      "isBinary": false,
+      "tokens": 1996
+    },
+    "src/output-streams.test.ts": {
+      "mtime": 1765261777005,
+      "size": 7671,
+      "contentHash": "e41b9053690bb1ca88c85c16821fd077b405e9dbd74370308e2860c8c17b8005",
+      "isBinary": false,
+      "tokens": 1708
+    },
+    "src/config-parallel.test.ts": {
+      "mtime": 1765307629687,
+      "size": 10328,
+      "contentHash": "e9ffc88ba880b0278e9d44856027fa40e3e2b8b2a10522859ea97f00434001d5",
+      "isBinary": false,
+      "tokens": 2535
+    },
+    "src/cache.test.ts": {
+      "mtime": 1765307625155,
+      "size": 8620,
+      "contentHash": "8dd9cb4dedf68fbd3dd1488b347d78c7d5ff9cc520a668f204acdac32941ef01",
+      "isBinary": false,
+      "tokens": 2050
+    },
+    "src/concurrency.test.ts": {
+      "mtime": 1765307625151,
+      "size": 3193,
+      "contentHash": "06f9889254a0421a55e10220e57b58afd288f758b2265ef3207989a22c167277",
+      "isBinary": false,
+      "tokens": 768
+    },
+    "examples/interactive.i.claude.md": {
+      "mtime": 1765451412430,
+      "size": 254,
+      "contentHash": "df06863f5a2223b1a7fb9bf6bf735b1c6e2d61cad6b9d632d2967f9f2112f020",
+      "isBinary": false,
+      "tokens": 66
+    },
+    "examples/subcommand.codex.md": {
+      "mtime": 1765451412430,
+      "size": 212,
+      "contentHash": "f3f78a3d9972e30cf9947177b7cf59a6966edf66ef22593d0cf827dd7711002c",
+      "isBinary": false,
+      "tokens": 54
+    },
+    "examples/multi-agent/architect.claude.md": {
+      "mtime": 1765456150559,
+      "size": 242,
+      "contentHash": "7a17d3a91ae8501c1cdb377c9efb78345a3b126cf1671efd61ec436975cc6b3f",
+      "isBinary": false,
+      "tokens": 60
+    },
+    "examples/multi-agent/implement.claude.md": {
+      "mtime": 1765456132251,
+      "size": 285,
+      "contentHash": "edaae28f0d4ff4cad03eca01ded7cbc950728360318b1f51737fa8a03ce5a65b",
+      "isBinary": false,
+      "tokens": 72
+    },
+    "examples/multi-agent/announcement.claude.md": {
+      "mtime": 1765456132075,
+      "size": 372,
+      "contentHash": "3c10a2f286661822bdcb9b284e551bcceb0d5cff12104f8e209d9d2b2e785608",
+      "isBinary": false,
+      "tokens": 93
+    },
+    "examples/positional-vars.claude.md": {
+      "mtime": 1765451177219,
+      "size": 168,
+      "contentHash": "f3e8f1aacdc73e487baa2aff678e3741b1e07da8435917c9e08ff5bae1b6665b",
+      "isBinary": false,
+      "tokens": 44
+    },
+    "examples/optional-flags.claude.md": {
+      "mtime": 1765451177219,
+      "size": 348,
+      "contentHash": "b91029a3e0373b30a6fb338eab07c1cda811e6e519095075784f398b20736072",
+      "isBinary": false,
+      "tokens": 90
+    },
+    "examples/multi-agent/audit.claude.md": {
+      "mtime": 1765456132344,
+      "size": 371,
+      "contentHash": "1c4044deaf0ef2aad6f7e1560dfe0be25f8b908c2dd639599ce005ba89540ffc",
+      "isBinary": false,
+      "tokens": 93
+    },
+    "examples/multi-agent/write-test.claude.md": {
+      "mtime": 1765456132161,
+      "size": 342,
+      "contentHash": "317745a4687929d002e3785c4a8c5a7da9a3db44dcbcb46a2083a7cc47ec5860",
+      "isBinary": false,
+      "tokens": 87
+    },
+    "examples/multi-agent/security-audit.claude.md": {
+      "mtime": 1765456150642,
+      "size": 285,
+      "contentHash": "078aeb037197c97e4e66c4248c0d3bf4923a4f690ba68d0287013205aeb26d6f",
+      "isBinary": false,
+      "tokens": 69
+    },
+    "examples/multi-agent/pr-review.claude.md": {
+      "mtime": 1765456150473,
+      "size": 462,
+      "contentHash": "c5a402e01c80fa88df82dcf64de6c6f9354d6e3e1e49d0e604339f85bc2747dd",
+      "isBinary": false,
+      "tokens": 120
+    },
+    "examples/multi-agent/changelog.claude.md": {
+      "mtime": 1765456131989,
+      "size": 381,
+      "contentHash": "7888ad354f61d65a39f94a15862088aa188ec94ebd8807808494721d636309f4",
+      "isBinary": false,
+      "tokens": 112
+    },
+    "examples/multi-agent/scaffold.claude.md": {
+      "mtime": 1765456150824,
+      "size": 397,
+      "contentHash": "2761fdcf81149fb8e0355dc61d31c2b7c24b31dee7cae06c56872f8923348293",
+      "isBinary": false,
+      "tokens": 97
+    },
+    "examples/line-range.claude.md": {
+      "mtime": 1765451412430,
+      "size": 206,
+      "contentHash": "e5db3c74fe26de1481725e0c48c3ca854df67eef669903b7d73138a4e60dec1b",
+      "isBinary": false,
+      "tokens": 56
+    },
+    "examples/multi-agent/patch.claude.md": {
+      "mtime": 1765456132438,
+      "size": 402,
+      "contentHash": "07e7da800e36bc332f3cb341ff959bf3f6233d7a8fa10db0e1fe2f9ada571c8c",
+      "isBinary": false,
+      "tokens": 101
+    },
+    "examples/multi-agent/audit-legacy.claude.md": {
+      "mtime": 1765456382146,
+      "size": 461,
+      "contentHash": "d919a35415577a716b0aaf314cfc20b8ae5f0a70ce487a74825c7765797cbd20",
+      "isBinary": false,
+      "tokens": 113
+    },
+    "examples/symbol-extract.claude.md": {
+      "mtime": 1765451412430,
+      "size": 213,
+      "contentHash": "d993ad171cc0c91584fcd8be455a9eb7c076399c403827f8affa9054d47a5d89",
+      "isBinary": false,
+      "tokens": 50
+    },
+    "examples/command-inline.claude.md": {
+      "mtime": 1765451412430,
+      "size": 259,
+      "contentHash": "cb207b3e600caa1fc52194bccb085fca7007061928f89175073a7f71516bc711",
+      "isBinary": false,
+      "tokens": 69
+    },
+    "examples/args-list.claude.md": {
+      "mtime": 1765451177219,
+      "size": 180,
+      "contentHash": "943b98e05b1c6977de67fc517af25fdcfce35fd0c6e621f7795fa9c8c150ece6",
+      "isBinary": false,
+      "tokens": 50
     }
   }
 }

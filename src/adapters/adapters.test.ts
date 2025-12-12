@@ -16,6 +16,8 @@ import { claudeAdapter } from "./claude";
 import { copilotAdapter } from "./copilot";
 import { codexAdapter } from "./codex";
 import { geminiAdapter } from "./gemini";
+import { droidAdapter } from "./droid";
+import { opencodeAdapter } from "./opencode";
 import type { ToolAdapter, AgentFrontmatter } from "../types";
 
 describe("Tool Adapter Registry", () => {
@@ -36,12 +38,22 @@ describe("Tool Adapter Registry", () => {
       expect(hasAdapter("gemini")).toBe(true);
     });
 
+    test("droid adapter is registered", () => {
+      expect(hasAdapter("droid")).toBe(true);
+    });
+
+    test("opencode adapter is registered", () => {
+      expect(hasAdapter("opencode")).toBe(true);
+    });
+
     test("getRegisteredAdapters returns all built-in adapters", () => {
       const adapters = getRegisteredAdapters();
       expect(adapters).toContain("claude");
       expect(adapters).toContain("copilot");
       expect(adapters).toContain("codex");
       expect(adapters).toContain("gemini");
+      expect(adapters).toContain("droid");
+      expect(adapters).toContain("opencode");
     });
   });
 
@@ -73,6 +85,14 @@ describe("Tool Adapter Registry", () => {
       // Codex defaults
       expect(defaults.codex).toBeDefined();
       expect(defaults.codex._subcommand).toBe("exec");
+
+      // Droid defaults
+      expect(defaults.droid).toBeDefined();
+      expect(defaults.droid._subcommand).toBe("exec");
+
+      // Opencode defaults
+      expect(defaults.opencode).toBeDefined();
+      expect(defaults.opencode._subcommand).toBe("run");
 
       // Gemini has no defaults (empty object not included)
       // Actually, gemini returns empty object, so it won't be in defaults
@@ -199,6 +219,50 @@ describe("Gemini Adapter", () => {
     const result = geminiAdapter.applyInteractiveMode(frontmatter);
     expect(result.$1).toBe("prompt-interactive");
     expect(result.model).toBe("pro");
+  });
+});
+
+describe("Droid Adapter", () => {
+  test("has correct name", () => {
+    expect(droidAdapter.name).toBe("droid");
+  });
+
+  test("getDefaults returns exec subcommand", () => {
+    const defaults = droidAdapter.getDefaults();
+    expect(defaults._subcommand).toBe("exec");
+  });
+
+  test("applyInteractiveMode removes _subcommand", () => {
+    const frontmatter: AgentFrontmatter = {
+      _subcommand: "exec",
+      model: "claude-opus-4-5",
+    };
+
+    const result = droidAdapter.applyInteractiveMode(frontmatter);
+    expect(result._subcommand).toBeUndefined();
+    expect(result.model).toBe("claude-opus-4-5");
+  });
+});
+
+describe("Opencode Adapter", () => {
+  test("has correct name", () => {
+    expect(opencodeAdapter.name).toBe("opencode");
+  });
+
+  test("getDefaults returns run subcommand", () => {
+    const defaults = opencodeAdapter.getDefaults();
+    expect(defaults._subcommand).toBe("run");
+  });
+
+  test("applyInteractiveMode removes _subcommand", () => {
+    const frontmatter: AgentFrontmatter = {
+      _subcommand: "run",
+      model: "anthropic/claude-sonnet",
+    };
+
+    const result = opencodeAdapter.applyInteractiveMode(frontmatter);
+    expect(result._subcommand).toBeUndefined();
+    expect(result.model).toBe("anthropic/claude-sonnet");
   });
 });
 

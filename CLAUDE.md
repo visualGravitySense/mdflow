@@ -140,6 +140,10 @@ task.codex.md       # Print mode: codex exec "..."
 task.i.codex.md     # Interactive: codex "..."
 task.gemini.md      # Print mode: gemini "..." (one-shot)
 task.i.gemini.md    # Interactive: gemini --prompt-interactive "..."
+task.droid.md       # Print mode: droid exec "..."
+task.i.droid.md     # Interactive: droid "..."
+task.opencode.md    # Print mode: opencode run "..."
+task.i.opencode.md  # Interactive: opencode "..."
 ```
 
 ### Global Config (`~/.mdflow/config.yaml`)

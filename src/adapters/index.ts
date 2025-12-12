@@ -18,6 +18,8 @@ import { claudeAdapter } from "./claude";
 import { copilotAdapter } from "./copilot";
 import { codexAdapter } from "./codex";
 import { geminiAdapter } from "./gemini";
+import { droidAdapter } from "./droid";
+import { opencodeAdapter } from "./opencode";
 
 /**
  * Default adapter for unknown tools
@@ -121,6 +123,8 @@ function initializeBuiltinAdapters(): void {
   registerAdapter(copilotAdapter);
   registerAdapter(codexAdapter);
   registerAdapter(geminiAdapter);
+  registerAdapter(droidAdapter);
+  registerAdapter(opencodeAdapter);
 }
 
 // Initialize built-in adapters on module load
