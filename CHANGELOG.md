@@ -1,3 +1,10 @@
+## [2.27.1](https://github.com/johnlindquist/mdflow/compare/v2.27.0...v2.27.1) (2025-12-12)
+
+
+### Bug Fixes
+
+* clear screen after editing to prevent selector duplication ([b0d9618](https://github.com/johnlindquist/mdflow/commit/b0d96184e6fcbe4847e1852562d896a50cd07f59))
+
 # [2.27.0](https://github.com/johnlindquist/mdflow/compare/v2.26.0...v2.27.0) (2025-12-11)
 
 
