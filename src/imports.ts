@@ -1,6 +1,7 @@
-import { resolve, dirname, relative, basename } from "path";
+import { resolve, dirname, relative, basename, join } from "path";
 import { realpathSync } from "fs";
-import { homedir, platform } from "os";
+import { chmod, unlink } from "fs/promises";
+import { homedir, platform, tmpdir } from "os";
 import { Glob } from "bun";
 import ignore from "ignore";
 import { resilientFetch } from "./fetch";
@@ -8,8 +9,8 @@ import { MAX_INPUT_SIZE, FileSizeLimitError, exceedsLimit } from "./limits";
 import { countTokens, getContextLimit } from "./tokenizer";
 import { Semaphore, DEFAULT_CONCURRENCY_LIMIT } from "./concurrency";
 import { substituteTemplateVars } from "./template";
-import { parseImports as parseImportsSafe } from "./imports-parser";
-import type { ImportAction } from "./imports-types";
+import { parseImports as parseImportsSafe, hasImportsInContent } from "./imports-parser";
+import type { ImportAction, ExecutableCodeFenceAction } from "./imports-types";
 
 /**
  * TTY Dashboard for monitoring parallel command execution
@@ -1035,11 +1036,64 @@ async function processCommandInline(
   }
 }
 
+/**
+ * Process an executable code fence by writing to temp file, making executable, and running
+ */
+async function processExecutableCodeFence(
+  action: { shebang: string; language: string; code: string },
+  currentFileDir: string,
+  verbose: boolean,
+  importCtx?: ImportContext
+): Promise<string> {
+  const { shebang, language, code } = action;
+  const fullScript = `${shebang}\n${code}`;
+
+  console.error(`[imports] Executing code fence (${language}): ${shebang}`);
+
+  if (importCtx?.dryRun) {
+    return `{% raw %}\n[Dry Run: Code fence not executed]\n{% endraw %}`;
+  }
+
+  const ext = { ts: 'ts', js: 'js', py: 'py', sh: 'sh', bash: 'sh' }[language] ?? language;
+  const tmpFile = join(tmpdir(), `mdflow-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`);
+
+  try {
+    await Bun.write(tmpFile, fullScript);
+    await chmod(tmpFile, 0o755);
+
+    const proc = Bun.spawn([tmpFile], {
+      cwd: importCtx?.invocationCwd ?? currentFileDir,
+      stdout: "pipe",
+      stderr: "pipe",
+      env: (importCtx?.env ?? process.env) as Record<string, string>,
+    });
+
+    const stdout = await new Response(proc.stdout).text();
+    const stderr = await new Response(proc.stderr).text();
+    await proc.exited;
+
+    if (proc.exitCode !== 0) {
+      const errorOutput = stderr || stdout || "No output";
+      throw new Error(`Code fence failed (Exit ${proc.exitCode}): ${errorOutput}`);
+    }
+
+    const output = (stdout + stderr).trim().replace(ANSI_ESCAPE_REGEX, '');
+    if (output) {
+      const safe = output.replace(/\{% endraw %\}/g, "{% endraw %}{{ '{% endraw %}' }}{% raw %}");
+      return `{% raw %}\n${safe}\n{% endraw %}`;
+    }
+    return output;
+  } finally {
+    try { await unlink(tmpFile); } catch {}
+  }
+}
+
 /** Import types for categorizing imports during parallel resolution */
 type ParsedImport =
   | { type: 'file'; full: string; path: string; index: number }
   | { type: 'url'; full: string; url: string; index: number }
-  | { type: 'command'; full: string; command: string; index: number };
+  | { type: 'command'; full: string; command: string; index: number }
+  | { type: 'executable_code_fence'; full: string; action: ExecutableCodeFenceAction; index: number };
 
 /** Result of resolving an import */
 interface ResolvedImportResult {
@@ -1177,6 +1231,8 @@ export async function expandImports(
         return { type: 'url' as const, full: action.original, url: action.url, index: action.index };
       case 'command':
         return { type: 'command' as const, full: action.original, command: action.command, index: action.index };
+      case 'executable_code_fence':
+        return { type: 'executable_code_fence' as const, full: action.original, action, index: action.index };
       default:
         // Should never happen, but TypeScript needs exhaustive handling
         return null as never;
@@ -1191,8 +1247,8 @@ export async function expandImports(
   // Create semaphore for concurrency limiting
   const semaphore = new Semaphore(concurrencyLimit);
 
-  // Initialize dashboard if we have any commands and are in a TTY environment
-  const commandImports = imports.filter(i => i.type === 'command');
+  // Initialize dashboard if we have any commands/fences and are in a TTY environment
+  const commandImports = imports.filter(i => i.type === 'command' || i.type === 'executable_code_fence');
   const useDashboard = commandImports.length > 0 && process.stderr.isTTY && !verbose;
   const dashboard = useDashboard ? new ParallelDashboard() : null;
 
@@ -1235,6 +1291,17 @@ export async function expandImports(
               if (dashboard) dashboard.finish(cmdId);
             }
             break;
+          case 'executable_code_fence':
+            // Register with dashboard
+            const fenceId = Math.random().toString(36).substring(7);
+            if (dashboard) dashboard.register(fenceId, `Code Fence (${imp.action.language || 'script'})`);
+
+            try {
+              resolvedContent = await processExecutableCodeFence(imp.action, currentFileDir, verbose, importCtx);
+            } finally {
+              if (dashboard) dashboard.finish(fenceId);
+            }
+            break;
         }
 
         return { import: imp, content: resolvedContent };
@@ -1252,16 +1319,9 @@ export async function expandImports(
 }
 
 /**
- * Check if content contains any imports, URL imports, or command inlines
+ * Check if content contains any imports, URL imports, command inlines, or executable code fences
  */
 export function hasImports(content: string): boolean {
-  FILE_IMPORT_PATTERN.lastIndex = 0;
-  URL_IMPORT_PATTERN.lastIndex = 0;
-  COMMAND_INLINE_PATTERN.lastIndex = 0;
-
-  return (
-    FILE_IMPORT_PATTERN.test(content) ||
-    URL_IMPORT_PATTERN.test(content) ||
-    COMMAND_INLINE_PATTERN.test(content)
-  );
+  // Use context-aware checker from parser which now includes code fences
+  return hasImportsInContent(content);
 }

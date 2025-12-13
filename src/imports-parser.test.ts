@@ -647,6 +647,97 @@ describe('parseSymbolExtraction', () => {
   });
 });
 
+describe('executable code fence imports', () => {
+  it('parses executable code fence with shebang', () => {
+    const content = '```ts\n#!/usr/bin/env bun\nconsole.log("hello")\n```';
+    const actions = parseImports(content);
+    expect(actions).toHaveLength(1);
+    expect(actions[0]!.type).toBe('executable_code_fence');
+    const action = actions[0] as any;
+    expect(action.shebang).toBe('#!/usr/bin/env bun');
+    expect(action.language).toBe('ts');
+    expect(action.code).toBe('console.log("hello")');
+  });
+
+  it('parses executable code fence with sh shebang', () => {
+    const content = '```sh\n#!/bin/bash\necho "hello"\n```';
+    const actions = parseImports(content);
+    expect(actions).toHaveLength(1);
+    expect(actions[0]!.type).toBe('executable_code_fence');
+    const action = actions[0] as any;
+    expect(action.shebang).toBe('#!/bin/bash');
+    expect(action.language).toBe('sh');
+    expect(action.code).toBe('echo "hello"');
+  });
+
+  it('parses executable code fence with python shebang', () => {
+    const content = '```python\n#!/usr/bin/env python3\nprint("hello")\n```';
+    const actions = parseImports(content);
+    expect(actions).toHaveLength(1);
+    expect(actions[0]!.type).toBe('executable_code_fence');
+    const action = actions[0] as any;
+    expect(action.shebang).toBe('#!/usr/bin/env python3');
+    expect(action.language).toBe('python');
+  });
+
+  it('does NOT parse code fence without shebang', () => {
+    const content = '```ts\nconsole.log("hello")\n```';
+    const actions = parseImports(content);
+    // No shebang means it's just a regular code block, not executable
+    expect(actions).toHaveLength(0);
+  });
+
+  it('does NOT parse shebang that is not on first line of code', () => {
+    const content = '```ts\n// comment\n#!/usr/bin/env bun\nconsole.log("hello")\n```';
+    const actions = parseImports(content);
+    // Shebang must be on the first line after the fence
+    expect(actions).toHaveLength(0);
+  });
+
+  it('parses multiline code in executable fence', () => {
+    const content = '```ts\n#!/usr/bin/env bun\nconst x = 1;\nconsole.log(x);\nprocess.exit(0);\n```';
+    const actions = parseImports(content);
+    expect(actions).toHaveLength(1);
+    const action = actions[0] as any;
+    expect(action.code).toContain('const x = 1;');
+    expect(action.code).toContain('console.log(x);');
+    expect(action.code).toContain('process.exit(0);');
+  });
+
+  it('handles variable-length fences (4+ backticks)', () => {
+    const content = '````ts\n#!/usr/bin/env bun\nconsole.log("hello")\n````';
+    const actions = parseImports(content);
+    expect(actions).toHaveLength(1);
+    expect(actions[0]!.type).toBe('executable_code_fence');
+  });
+
+  it('preserves original match for replacement', () => {
+    const content = 'before\n```ts\n#!/usr/bin/env bun\nconsole.log("hello")\n```\nafter';
+    const actions = parseImports(content);
+    expect(actions).toHaveLength(1);
+    const action = actions[0] as any;
+    expect(action.original).toBe('```ts\n#!/usr/bin/env bun\nconsole.log("hello")\n```');
+    expect(action.index).toBe(7); // Position after "before\n"
+  });
+
+  it('parses multiple executable fences', () => {
+    const content = '```sh\n#!/bin/bash\necho 1\n```\n\n```ts\n#!/usr/bin/env bun\nconsole.log(2)\n```';
+    const actions = parseImports(content);
+    expect(actions).toHaveLength(2);
+    expect(actions[0]!.type).toBe('executable_code_fence');
+    expect(actions[1]!.type).toBe('executable_code_fence');
+  });
+
+  it('mixes executable fences with file imports', () => {
+    const content = '@./config.md\n\n```ts\n#!/usr/bin/env bun\nconsole.log("hello")\n```\n\n@./footer.md';
+    const actions = parseImports(content);
+    expect(actions).toHaveLength(3);
+    expect(actions[0]!.type).toBe('file');
+    expect(actions[1]!.type).toBe('executable_code_fence');
+    expect(actions[2]!.type).toBe('file');
+  });
+});
+
 describe('findSafeRanges', () => {
   it('returns full range for plain text', () => {
     const content = 'plain text content';

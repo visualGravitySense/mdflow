@@ -644,3 +644,62 @@ describe("parallel import resolution", () => {
     expect(result).toBe("Parent1 Child end1 Parent2 Child end2");
   });
 });
+
+// Executable code fence tests
+describe("executable code fences", () => {
+  test("executes bash code fence with shebang", async () => {
+    const content = '```sh\n#!/bin/bash\necho "hello from bash"\n```';
+    const result = await expandImports(content, testDir);
+    expect(result).toContain("hello from bash");
+    expect(result).toContain("{% raw %}");
+  });
+
+  test("executes bun/typescript code fence with shebang", async () => {
+    const content = '```ts\n#!/usr/bin/env bun\nconsole.log("hello from bun")\n```';
+    const result = await expandImports(content, testDir);
+    expect(result).toContain("hello from bun");
+  });
+
+  test("does NOT execute code fence without shebang", async () => {
+    const content = '```ts\nconsole.log("should not run")\n```';
+    const result = await expandImports(content, testDir);
+    // The code fence should remain as-is since it has no shebang
+    expect(result).toBe('```ts\nconsole.log("should not run")\n```');
+  });
+
+  test("handles code fence failure gracefully", async () => {
+    const content = '```sh\n#!/bin/bash\nexit 1\n```';
+    await expect(expandImports(content, testDir)).rejects.toThrow("Code fence failed");
+  });
+
+  test("code fence output is wrapped in raw block", async () => {
+    const content = '```sh\n#!/bin/bash\necho "{{ template syntax }}"\n```';
+    const result = await expandImports(content, testDir);
+    // Output should be protected from LiquidJS interpretation
+    expect(result).toContain("{% raw %}");
+    expect(result).toContain("{% endraw %}");
+    expect(result).toContain("{{ template syntax }}");
+  });
+
+  test("respects dry-run mode for code fences", async () => {
+    const content = '```sh\n#!/bin/bash\necho "should not run"\n```';
+    const result = await expandImports(content, testDir, new Set(), false, {
+      dryRun: true,
+    });
+    expect(result).toContain("Dry Run");
+    expect(result).toContain("Code fence not executed");
+  });
+
+  test("mixes code fence with file imports", async () => {
+    await Bun.write(join(testDir, "fence-file.md"), "File content");
+
+    const content = '@./fence-file.md\n\n```sh\n#!/bin/bash\necho "Command output"\n```';
+    const result = await expandImports(content, testDir);
+    expect(result).toContain("File content");
+    expect(result).toContain("Command output");
+  });
+
+  test("hasImports detects executable code fences", () => {
+    expect(hasImports('```sh\n#!/bin/bash\necho hi\n```')).toBe(true);
+  });
+});

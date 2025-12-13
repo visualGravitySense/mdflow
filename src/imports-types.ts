@@ -57,13 +57,24 @@ export interface SymbolImportAction {
   index: number;
 }
 
+/** Executable Code Fence Action */
+export interface ExecutableCodeFenceAction {
+  type: 'executable_code_fence';
+  shebang: string;      // "#!/usr/bin/env bun"
+  language: string;     // "ts", "js", "python"
+  code: string;         // Code content (without shebang)
+  original: string;     // Full match including fence markers
+  index: number;
+}
+
 /** Union of all import action types */
 export type ImportAction =
   | FileImportAction
   | GlobImportAction
   | UrlImportAction
   | CommandImportAction
-  | SymbolImportAction;
+  | SymbolImportAction
+  | ExecutableCodeFenceAction;
 
 /**
  * Resolved Import - Output of the resolver (Phase 2)

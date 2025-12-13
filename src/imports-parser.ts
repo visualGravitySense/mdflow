@@ -13,6 +13,7 @@ import type {
   UrlImportAction,
   CommandImportAction,
   SymbolImportAction,
+  ExecutableCodeFenceAction,
 } from './imports-types';
 
 /**
@@ -32,27 +33,36 @@ export function findSafeRanges(content: string): Array<{ start: number; end: num
   let context: ScanContext = 'normal';
   let rangeStart = 0;
   let i = 0;
+  let fenceChar = '';
+  let fenceLen = 0;
 
   while (i < content.length) {
     if (context === 'normal') {
-      // Check for fenced code block start (``` or ~~~)
-      if (
-        (content[i] === '`' && content.slice(i, i + 3) === '```') ||
-        (content[i] === '~' && content.slice(i, i + 3) === '~~~')
-      ) {
-        // End current safe range before the fence
-        if (i > rangeStart) {
-          safeRanges.push({ start: rangeStart, end: i });
+      // Check for fenced code block start (3+ backticks or tildes)
+      if (content[i] === '`' || content[i] === '~') {
+        const char = content[i];
+        let len = 0;
+        let j = i;
+        while (j < content.length && content[j] === char) {
+          len++;
+          j++;
         }
-        context = 'fenced_code';
-        // Skip the opening fence and any language identifier on the same line
-        const fenceChar = content[i];
-        i += 3;
-        // Skip to end of line (the info string after ```)
-        while (i < content.length && content[i] !== '\n') {
-          i++;
+
+        if (len >= 3) {
+          // It's a fence
+          if (i > rangeStart) {
+            safeRanges.push({ start: rangeStart, end: i });
+          }
+          context = 'fenced_code';
+          fenceChar = char;
+          fenceLen = len;
+          i += len;
+          // Skip info string
+          while (i < content.length && content[i] !== '\n') {
+            i++;
+          }
+          continue;
         }
-        continue;
       }
 
       // Check for inline code start (single backtick, not followed by another)
@@ -68,26 +78,30 @@ export function findSafeRanges(content: string): Array<{ start: number; end: num
 
       i++;
     } else if (context === 'fenced_code') {
-      // Look for closing fence (``` or ~~~)
-      // Must be at start of line (after newline or at start of content)
+      // Look for closing fence
       const atLineStart = i === 0 || content[i - 1] === '\n';
-      if (
-        atLineStart &&
-        ((content[i] === '`' && content.slice(i, i + 3) === '```') ||
-          (content[i] === '~' && content.slice(i, i + 3) === '~~~'))
-      ) {
-        // Skip the closing fence
-        i += 3;
-        // Skip to end of line
-        while (i < content.length && content[i] !== '\n') {
-          i++;
+      if (atLineStart && content[i] === fenceChar) {
+        let len = 0;
+        let j = i;
+        while (j < content.length && content[j] === fenceChar) {
+          len++;
+          j++;
         }
-        if (i < content.length) {
-          i++; // Skip the newline
+
+        if (len >= fenceLen) {
+          // Close it
+          i += len;
+          // Skip to end of line
+          while (i < content.length && content[i] !== '\n') {
+            i++;
+          }
+          if (i < content.length) {
+            i++; // Skip the newline
+          }
+          context = 'normal';
+          rangeStart = i;
+          continue;
         }
-        context = 'normal';
-        rangeStart = i;
-        continue;
       }
       i++;
     } else if (context === 'inline_code') {
@@ -151,6 +165,13 @@ const COMMAND_INLINE_PATTERN = /!(`+)([\s\S]+?)\1/g;
  * The URL continues until whitespace or end of line
  */
 const URL_IMPORT_PATTERN = /@(https?:\/\/[^\s]+)/g;
+
+/**
+ * Pattern to match executable code fences
+ * Matches: ```lang\n#!shebang\ncode\n```
+ * Supports variable length fences.
+ */
+const EXECUTABLE_FENCE_PATTERN = /(`{3,})(.*?)\n(#![^\n]+)\n([\s\S]*?)\1/g;
 
 /**
  * Check if a path contains glob characters
@@ -258,6 +279,22 @@ export function parseImports(content: string): ImportAction[] {
   // Find safe ranges where imports should be parsed (outside code blocks)
   const safeRanges = findSafeRanges(content);
 
+  // Identify starts of unsafe blocks (gaps between safe ranges)
+  // These are the only valid positions for executable code fences.
+  // This prevents execution of fences nested inside documentation blocks.
+  const unsafeStarts = new Set<number>();
+  if (safeRanges.length > 0) {
+    if (safeRanges[0].start > 0) unsafeStarts.add(0);
+    for (const range of safeRanges) {
+      if (range.end < content.length) {
+        unsafeStarts.add(range.end);
+      }
+    }
+  } else if (content.length > 0) {
+    // If content exists but no safe ranges, the whole thing is unsafe (a code block)
+    unsafeStarts.add(0);
+  }
+
   // Parse file imports (includes globs, line ranges, symbols)
   FILE_IMPORT_PATTERN.lastIndex = 0;
   let match;
@@ -299,6 +336,29 @@ export function parseImports(content: string): ImportAction[] {
         index: match.index,
       };
       actions.push(cmdAction);
+    }
+  }
+
+  // Parse executable code fences
+  // Must match a top-level code block (start of an unsafe gap)
+  EXECUTABLE_FENCE_PATTERN.lastIndex = 0;
+  while ((match = EXECUTABLE_FENCE_PATTERN.exec(content)) !== null) {
+    // Only process if the match aligns exactly with a known code block start
+    if (unsafeStarts.has(match.index)) {
+      const [fullMatch, fence, infoString, shebang, code] = match;
+      const language = infoString.trim().split(/\s+/)[0]; // Extract first word as language
+
+      if (shebang && code !== undefined) {
+        const action: ExecutableCodeFenceAction = {
+          type: 'executable_code_fence',
+          language: language || 'txt',
+          shebang,
+          code: code.trim(),
+          original: fullMatch,
+          index: match.index,
+        };
+        actions.push(action);
+      }
     }
   }
 
