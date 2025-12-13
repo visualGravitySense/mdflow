@@ -99,9 +99,9 @@ bun install && bun link
 mdflow task.claude.md
 mdflow task.gemini.md
 
-# Override command via --command flag
-mdflow task.md --command claude
-mdflow task.md -c gemini
+# Override command via --_command flag
+mdflow task.md --_command claude
+mdflow task.md -_c gemini
 
 # Pass additional flags to the command
 mdflow task.claude.md --verbose --debug
@@ -115,7 +115,7 @@ mdflow task.claude.md --verbose --debug
 
 Commands are resolved in this priority order:
 
-1. **CLI flag**: `--command claude` or `-c claude`
+1. **CLI flag**: `--_command claude` or `-_c claude`
 2. **Filename pattern**: `task.claude.md` → `claude`
 
 If no command can be resolved, you'll get an error with instructions.
@@ -126,17 +126,17 @@ If no command can be resolved, you'll get an error with instructions.
 
 Some CLI flags are "hijacked" by mdflow—they're consumed and never passed to the underlying command. This allows generic markdown files without command names to be executed.
 
-### `--command` / `-c`
+### `--_command` / `-_c`
 
 Override the command for any markdown file:
 
 ```bash
 # Run a generic .md file with any command
-mdflow task.md --command claude
-mdflow task.md -c gemini
+mdflow task.md --_command claude
+mdflow task.md -_c gemini
 
 # Override the filename-inferred command
-mdflow task.claude.md --command gemini  # Runs gemini, not claude
+mdflow task.claude.md --_command gemini  # Runs gemini, not claude
 ```
 
 ### `_varname` Template Variables
@@ -512,10 +512,10 @@ Fetch content from URLs (markdown and JSON only):
 @https://raw.githubusercontent.com/user/repo/main/README.md
 ```
 
-**Caching:** Remote URLs are cached locally at `~/.mdflow/cache/` with a 1-hour TTL. Use `--no-cache` to force a fresh fetch:
+**Caching:** Remote URLs are cached locally at `~/.mdflow/cache/` with a 1-hour TTL. Use `--_no-cache` to force a fresh fetch:
 
 ```bash
-mdflow agent.claude.md --no-cache
+mdflow agent.claude.md --_no-cache
 ```
 
 ---
@@ -552,37 +552,37 @@ Environment variables are available:
 
 ```
 Usage: mdflow <file.md> [any flags for the command]
-       mdflow <file.md> --command <cmd>
-       mdflow --setup
-       mdflow --logs
-       mdflow --help
+       mdflow <file.md> --_command <cmd>
+       mdflow setup
+       mdflow logs
+       mdflow help
 
 Command resolution:
-  1. --command flag (e.g., mdflow task.md --command claude)
+  1. --_command flag (e.g., mdflow task.md --_command claude)
   2. Filename pattern (e.g., task.claude.md → claude)
 
 All frontmatter keys are passed as CLI flags to the command.
 Global defaults can be set in ~/.mdflow/config.yaml
 
 mdflow-specific flags (consumed, not passed to command):
-  --command, -c       Specify command to run
-  --dry-run           Preview without executing
+  --_command, -_c     Specify command to run
+  --_dry-run          Preview without executing
   --_interactive, -_i Enable interactive mode
-  --no-cache          Force fresh fetch for remote URLs (bypass cache)
-  --trust             Bypass TOFU prompts for remote URLs
+  --_no-cache         Force fresh fetch for remote URLs (bypass cache)
+  --_trust            Bypass TOFU prompts for remote URLs
 
 Examples:
   mdflow task.claude.md -p "print mode"
   mdflow task.claude.md --model opus --verbose
   mdflow commit.gemini.md
-  mdflow task.md --command claude
-  mdflow task.md -c gemini
+  mdflow task.md --_command claude
+  mdflow task.md -_c gemini
   mdflow task.claude.md -_i  # Run in interactive mode
 
 Without a file:
-  mdflow --setup    Configure shell to run .md files directly
-  mdflow --logs     Show log directory
-  mdflow --help     Show this help
+  mdflow setup      Configure shell to run .md files directly
+  mdflow logs       Show log directory
+  mdflow help       Show this help
 ```
 
 ### Environment Variables
@@ -599,7 +599,7 @@ Without a file:
 Make `.md` files directly executable:
 
 ```bash
-mdflow --setup   # One-time setup
+mdflow setup   # One-time setup
 ```
 
 Then run agents directly:
@@ -652,8 +652,8 @@ git diff | review.claude.md      # Review staged changes
 - If no frontmatter is present, the file is printed as-is (unless command inferred from filename)
 - Template system uses [LiquidJS](https://liquidjs.com/) - supports conditionals, loops, and filters
 - Logs are always written to `~/.mdflow/logs/<agent-name>/` for debugging
-- Use `--logs` to show the log directory
+- Use `mdflow logs` to show the log directory
 - Piped input is available as `{{ _stdin }}` template variable
 - Template variables use `_` prefix: `_name` in frontmatter → `{{ _name }}` in body → `--_name` CLI flag
-- Remote URLs are cached at `~/.mdflow/cache/` with 1-hour TTL (use `--no-cache` to bypass)
+- Remote URLs are cached at `~/.mdflow/cache/` with 1-hour TTL (use `--_no-cache` to bypass)
 - Imports inside code blocks (``` or `) are ignored by the parser
