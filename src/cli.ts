@@ -1,5 +1,5 @@
 import { Glob } from "bun";
-import { basename, join } from "path";
+import { basename, join, delimiter } from "path";
 import { realpathSync } from "fs";
 import { homedir } from "os";
 import { EarlyExitRequest, UserCancelledError } from "./errors";
@@ -225,7 +225,8 @@ export async function findAgentFiles(): Promise<AgentFile[]> {
   }
 
   // 4. $PATH directories
-  const pathDirs = (process.env.PATH || "").split(":");
+  // Use path.delimiter for cross-platform support (: on Unix, ; on Windows)
+  const pathDirs = (process.env.PATH || "").split(delimiter);
   for (const dir of pathDirs) {
     if (!dir) continue;
     try {

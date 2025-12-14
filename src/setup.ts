@@ -1,7 +1,10 @@
 import { existsSync } from "fs";
-import { homedir } from "os";
+import { homedir, platform } from "os";
 import { join } from "path";
 import { select, confirm } from "@inquirer/prompts";
+
+/** Detect current platform */
+const isWindows = platform() === "win32";
 
 const SHELL_SNIPPET = `
 # mdflow: Treat .md files as executable agents
@@ -101,6 +104,62 @@ fi
 _mdflow_chpwd
 `.trim();
 
+// ============================================================================
+// PowerShell Snippets (Windows)
+// ============================================================================
+
+const POWERSHELL_MD_ALIAS_SNIPPET = `
+# mdflow: Short alias for mdflow command
+Set-Alias -Name md -Value mdflow -Option AllScope -Scope Global
+`.trim();
+
+const POWERSHELL_PATH_SNIPPET = `
+# mdflow: Add agent directories to PATH
+# User agents (~/.mdflow) - run agents by name from anywhere
+$mdflowUserDir = Join-Path $env:USERPROFILE ".mdflow"
+if (Test-Path $mdflowUserDir) {
+    $env:PATH = "$mdflowUserDir;$env:PATH"
+}
+
+# mdflow: Function to run .md files as agents
+function Invoke-MdflowAgent {
+    param([string]$Path, [Parameter(ValueFromRemainingArguments)]$Args)
+
+    # Resolve path: check multiple locations
+    $resolved = $null
+
+    # 1. Check as-is (absolute or relative)
+    if (Test-Path $Path) {
+        $resolved = $Path
+    }
+    # 2. Check .mdflow/ directory
+    elseif (Test-Path ".mdflow\\$Path") {
+        $resolved = ".mdflow\\$Path"
+    }
+    # 3. Check ~/.mdflow/ directory
+    elseif (Test-Path "$env:USERPROFILE\\.mdflow\\$Path") {
+        $resolved = "$env:USERPROFILE\\.mdflow\\$Path"
+    }
+    # 4. Search PATH directories
+    else {
+        foreach ($dir in $env:PATH -split ';') {
+            if ($dir -and (Test-Path "$dir\\$Path")) {
+                $resolved = "$dir\\$Path"
+                break
+            }
+        }
+    }
+
+    if (-not $resolved) {
+        Write-Error "File not found: $Path (checked cwd, .mdflow/, ~/.mdflow/, and PATH)"
+        return
+    }
+
+    # Run with mdflow
+    & mdflow $resolved @Args
+}
+`.trim();
+
 type SetupFeature = "alias" | "path" | "both";
 
 interface ShellConfig {
@@ -117,10 +176,47 @@ interface MdCommandInfo {
 
 /**
  * Check if 'md' command is already bound to something else
+ * Cross-platform: Uses PowerShell on Windows, zsh on Unix
  */
 async function checkMdCommand(): Promise<MdCommandInfo> {
   try {
-    // Use interactive shell (-i) to detect aliases from .zshrc/oh-my-zsh
+    if (isWindows) {
+      // On Windows, use PowerShell to check for existing 'md' command
+      // Note: 'md' is a built-in cmd.exe alias for 'mkdir', but PowerShell handles it differently
+      const proc = Bun.spawn(["powershell", "-NoProfile", "-Command", "Get-Command md -ErrorAction SilentlyContinue | Select-Object -Property CommandType,Definition | ConvertTo-Json"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      const output = await new Response(proc.stdout).text();
+      await proc.exited;
+
+      if (!output.trim()) {
+        return { exists: false, type: "unknown" };
+      }
+
+      try {
+        const cmdInfo = JSON.parse(output.trim());
+        if (cmdInfo.Definition?.includes("mdflow")) {
+          return { exists: false, type: "alias" }; // It's ours
+        }
+        const cmdType = cmdInfo.CommandType?.toLowerCase() || "unknown";
+        if (cmdType === "alias") {
+          return { exists: true, type: "alias", location: cmdInfo.Definition || "PowerShell alias" };
+        }
+        if (cmdType === "function") {
+          return { exists: true, type: "function", location: "PowerShell function" };
+        }
+        if (cmdType === "cmdlet" || cmdType === "application") {
+          return { exists: true, type: "binary", location: cmdInfo.Definition || cmdType };
+        }
+        return { exists: true, type: "unknown", location: cmdInfo.Definition || cmdType };
+      } catch {
+        // JSON parse failed, 'md' likely doesn't exist as a PowerShell command
+        return { exists: false, type: "unknown" };
+      }
+    }
+
+    // Unix: Use interactive shell (-i) to detect aliases from .zshrc/oh-my-zsh
     // The command checks type and also gets alias definition if it's an alias
     const proc = Bun.spawn(["zsh", "-ic", "type -a md 2>/dev/null; echo '---ALIAS---'; alias md 2>/dev/null"], {
       stdout: "pipe",
@@ -185,11 +281,16 @@ async function checkMdCommand(): Promise<MdCommandInfo> {
 
 /**
  * Check if md alias is already installed in a config file (pointing to mdflow)
+ * Cross-platform: Checks for both Unix alias and PowerShell Set-Alias
  */
 async function isMdAliasInstalled(configPath: string): Promise<boolean> {
   try {
     const content = await Bun.file(configPath).text();
-    return content.includes("alias md='mdflow'") || content.includes('alias md="mdflow"');
+    // Unix: alias md='mdflow' or alias md="mdflow"
+    // PowerShell: Set-Alias -Name md -Value mdflow
+    return content.includes("alias md='mdflow'") ||
+           content.includes('alias md="mdflow"') ||
+           content.includes("Set-Alias -Name md -Value mdflow");
   } catch {
     return false;
   }
@@ -197,9 +298,32 @@ async function isMdAliasInstalled(configPath: string): Promise<boolean> {
 
 /**
  * Find potential shell config files
+ * Cross-platform: Includes PowerShell profiles on Windows
  */
 function findShellConfigs(): ShellConfig[] {
   const home = homedir();
+
+  if (isWindows) {
+    // Windows: PowerShell profile locations
+    // $PROFILE.CurrentUserAllHosts = Documents\PowerShell\profile.ps1 (PS Core)
+    // $PROFILE.CurrentUserAllHosts = Documents\WindowsPowerShell\profile.ps1 (Windows PS)
+    const documentsPath = join(home, "Documents");
+    const candidates = [
+      // PowerShell Core (cross-platform PS 7+)
+      { name: "PowerShell/profile.ps1", path: join(documentsPath, "PowerShell", "profile.ps1") },
+      // Windows PowerShell 5.x
+      { name: "WindowsPowerShell/profile.ps1", path: join(documentsPath, "WindowsPowerShell", "profile.ps1") },
+      // Alternative locations
+      { name: ".config/powershell/profile.ps1", path: join(home, ".config", "powershell", "profile.ps1") },
+    ];
+
+    return candidates.map((c) => ({
+      ...c,
+      exists: existsSync(c.path),
+    }));
+  }
+
+  // Unix: bash, zsh, fish config files
   const candidates = [
     { name: ".zshrc", path: join(home, ".zshrc") },
     { name: ".config/zsh/.zshrc", path: join(home, ".config", "zsh", ".zshrc") },
@@ -217,11 +341,16 @@ function findShellConfigs(): ShellConfig[] {
 
 /**
  * Check if alias snippet is already installed in a config file
+ * Cross-platform: Checks for Unix and PowerShell patterns
  */
 async function isAliasInstalled(configPath: string): Promise<boolean> {
   try {
     const content = await Bun.file(configPath).text();
-    return content.includes("alias -s md=") || content.includes("_handle_md");
+    // Unix: alias -s md= or _handle_md function
+    // PowerShell: Invoke-MdflowAgent function
+    return content.includes("alias -s md=") ||
+           content.includes("_handle_md") ||
+           content.includes("Invoke-MdflowAgent");
   } catch {
     return false;
   }
@@ -229,11 +358,17 @@ async function isAliasInstalled(configPath: string): Promise<boolean> {
 
 /**
  * Check if PATH snippet is already installed in a config file
+ * Cross-platform: Checks for Unix and PowerShell patterns
  */
 async function isPathInstalled(configPath: string): Promise<boolean> {
   try {
     const content = await Bun.file(configPath).text();
-    return content.includes("_mdflow_chpwd") || content.includes('$HOME/.mdflow:$PATH');
+    // Unix: _mdflow_chpwd function or $HOME/.mdflow in PATH
+    // PowerShell: $mdflowUserDir or .mdflow in PATH
+    return content.includes("_mdflow_chpwd") ||
+           content.includes('$HOME/.mdflow:$PATH') ||
+           content.includes('$mdflowUserDir') ||
+           content.includes('Join-Path $env:USERPROFILE ".mdflow"');
   } catch {
     return false;
   }
@@ -253,6 +388,7 @@ async function appendToConfig(configPath: string, snippet: string): Promise<void
 
 /**
  * Interactive setup wizard
+ * Cross-platform: Supports Unix shells (bash, zsh, fish) and Windows PowerShell
  */
 export async function runSetup(): Promise<void> {
   console.log("\n📝 mdflow Shell Setup\n");
@@ -261,8 +397,15 @@ export async function runSetup(): Promise<void> {
   const existingConfigs = configs.filter((c) => c.exists);
 
   if (existingConfigs.length === 0) {
-    console.log("No shell config files found. Will create ~/.zshrc\n");
-    existingConfigs.push({ name: ".zshrc", path: join(homedir(), ".zshrc"), exists: false });
+    if (isWindows) {
+      // On Windows, default to PowerShell Core profile
+      const defaultPath = join(homedir(), "Documents", "PowerShell", "profile.ps1");
+      console.log("No shell config files found. Will create PowerShell profile.\n");
+      existingConfigs.push({ name: "PowerShell/profile.ps1", path: defaultPath, exists: false });
+    } else {
+      console.log("No shell config files found. Will create ~/.zshrc\n");
+      existingConfigs.push({ name: ".zshrc", path: join(homedir(), ".zshrc"), exists: false });
+    }
   }
 
   // Check what's already installed
@@ -301,7 +444,8 @@ export async function runSetup(): Promise<void> {
 
   if (featureChoices.length === 0) {
     console.log("✅ Both features are already installed in " + primaryConfig.name);
-    console.log("\nTo apply changes, run: source ~/" + primaryConfig.name);
+    const reloadCmd = isWindows ? `. $PROFILE` : `source ~/${primaryConfig.name}`;
+    console.log(`\nTo apply changes, run: ${reloadCmd}`);
     return;
   }
 
@@ -311,14 +455,26 @@ export async function runSetup(): Promise<void> {
     choices: featureChoices,
   });
 
-  // Build the snippet based on selection
+  // Build the snippet based on selection and platform
   let snippet = "";
-  if (feature === "alias" || feature === "both") {
-    snippet += SHELL_SNIPPET;
-  }
-  if (feature === "path" || feature === "both") {
-    if (snippet) snippet += "\n\n";
-    snippet += PATH_SNIPPET;
+  if (isWindows) {
+    // Windows: Use PowerShell snippets
+    if (feature === "alias" || feature === "both") {
+      // Note: PowerShell doesn't have suffix aliases like zsh, so we just add PATH setup
+      // The PATH snippet includes the Invoke-MdflowAgent function for file resolution
+      snippet += POWERSHELL_PATH_SNIPPET;
+    } else if (feature === "path") {
+      snippet += POWERSHELL_PATH_SNIPPET;
+    }
+  } else {
+    // Unix: Use bash/zsh snippets
+    if (feature === "alias" || feature === "both") {
+      snippet += SHELL_SNIPPET;
+    }
+    if (feature === "path" || feature === "both") {
+      if (snippet) snippet += "\n\n";
+      snippet += PATH_SNIPPET;
+    }
   }
 
   // Check if md command is already bound and offer to create alias
@@ -330,7 +486,10 @@ export async function runSetup(): Promise<void> {
       console.log(`\n⚠️  The 'md' command is already in use:`);
       console.log(`   ${mdCommand.location || `(${mdCommand.type})`}`);
 
-      if (mdCommand.type === "alias") {
+      if (isWindows) {
+        console.log(`\n   On Windows, 'md' is typically an alias for 'mkdir'.`);
+        console.log(`   Adding a PowerShell alias will override it in PowerShell sessions.\n`);
+      } else if (mdCommand.type === "alias") {
         console.log(`\n   This alias is commonly set by oh-my-zsh (common-aliases plugin).`);
         console.log(`   Adding 'alias md=mdflow' will override it.\n`);
       } else if (mdCommand.type === "binary") {
@@ -341,7 +500,9 @@ export async function runSetup(): Promise<void> {
       }
 
       addMdAlias = await confirm({
-        message: "Would you like to add 'alias md=mdflow' to override it?",
+        message: isWindows
+          ? "Would you like to add 'Set-Alias md mdflow' to override it?"
+          : "Would you like to add 'alias md=mdflow' to override it?",
         default: false,
       });
     } else {
@@ -353,7 +514,7 @@ export async function runSetup(): Promise<void> {
     }
 
     if (addMdAlias) {
-      snippet += "\n\n" + MD_ALIAS_SNIPPET;
+      snippet += "\n\n" + (isWindows ? POWERSHELL_MD_ALIAS_SNIPPET : MD_ALIAS_SNIPPET);
     }
   }
 
@@ -379,12 +540,33 @@ export async function runSetup(): Promise<void> {
   });
 
   if (selectedPath === "clipboard") {
-    const proc = Bun.spawn(["pbcopy"], { stdin: "pipe" });
-    proc.stdin.write(snippet);
-    proc.stdin.end();
-    await proc.exited;
-    console.log("\n✅ Copied to clipboard!");
-    console.log("Paste into your shell config file and run: source ~/.zshrc");
+    // Cross-platform clipboard copy
+    // Windows: clip.exe, macOS: pbcopy, Linux: xclip or xsel
+    let clipboardCmd: string[];
+    if (isWindows) {
+      clipboardCmd = ["clip.exe"];
+    } else if (platform() === "darwin") {
+      clipboardCmd = ["pbcopy"];
+    } else {
+      // Linux: try xclip first
+      clipboardCmd = ["xclip", "-selection", "clipboard"];
+    }
+
+    try {
+      const proc = Bun.spawn(clipboardCmd, { stdin: "pipe" });
+      proc.stdin.write(snippet);
+      proc.stdin.end();
+      await proc.exited;
+      console.log("\n✅ Copied to clipboard!");
+    } catch {
+      console.log("\n⚠️  Could not copy to clipboard. Here's the snippet to copy manually:\n");
+      console.log(snippet);
+    }
+
+    const reloadHint = isWindows
+      ? "Paste into your PowerShell profile and run: . $PROFILE"
+      : "Paste into your shell config file and run: source ~/.zshrc";
+    console.log(reloadHint);
     return;
   }
 
@@ -403,7 +585,13 @@ export async function runSetup(): Promise<void> {
   await appendToConfig(selectedPath, snippet);
   const configName = existingConfigs.find((c) => c.path === selectedPath)?.name || selectedPath;
   console.log(`\n✅ Added to ${configName}`);
-  console.log(`\nTo apply changes now, run:\n  source ${selectedPath}`);
+
+  // Platform-specific reload instructions
+  if (isWindows) {
+    console.log(`\nTo apply changes now, run:\n  . $PROFILE`);
+  } else {
+    console.log(`\nTo apply changes now, run:\n  source ${selectedPath}`);
+  }
 
   if (feature === "path" || feature === "both") {
     console.log("\nNow you can:");

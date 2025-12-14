@@ -29,7 +29,7 @@ import {
   getImportLogger, getCurrentLogPath,
 } from "./logger";
 import { isDomainTrusted, promptForTrust, addTrustedDomain, extractDomain } from "./trust";
-import { dirname, resolve, join } from "path";
+import { dirname, resolve, join, delimiter, sep } from "path";
 import { homedir } from "os";
 import { input } from "@inquirer/prompts";
 import { exceedsLimit, StdinSizeLimitError } from "./limits";
@@ -111,7 +111,8 @@ export class CliRunner {
     }
 
     // Only search directories for simple filenames (no path separators)
-    if (!filePath.includes("/")) {
+    // Check for both forward slash and platform-specific separator for cross-platform support
+    if (!filePath.includes("/") && !filePath.includes(sep)) {
       // 2. Try ./.mdflow/
       const projectPath = join(this.cwd, ".mdflow", filePath);
       if (await this.env.fs.exists(projectPath)) {
@@ -125,7 +126,8 @@ export class CliRunner {
       }
 
       // 4. Try $PATH directories
-      const pathDirs = (this.processEnv.PATH || "").split(":");
+      // Use path.delimiter for cross-platform support (: on Unix, ; on Windows)
+      const pathDirs = (this.processEnv.PATH || "").split(delimiter);
       for (const dir of pathDirs) {
         if (!dir) continue;
         const pathFilePath = join(dir, filePath);
