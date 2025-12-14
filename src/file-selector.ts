@@ -19,16 +19,23 @@ import { homedir } from "os";
 import { spawnSync } from "node:child_process";
 import type { AgentFile } from "./cli";
 
-/** Result from file selector - either a path to run or edit */
+/** Result from file selector - either a path to run, edit, or dry-run */
 export interface FileSelectorResult {
-  action: "run" | "edit";
+  action: "run" | "edit" | "dry-run";
   path: string;
+}
+
+/** Result from showFileSelectorWithPreview */
+export interface FileSelectorSelection {
+  path: string;
+  dryRun: boolean;
 }
 
 // Extended key event type (runtime has more properties than type declares)
 interface ExtendedKeyEvent extends KeypressEvent {
   sequence?: string;
   meta?: boolean;
+  shift?: boolean;
 }
 
 // Cache for file contents to avoid repeated reads
@@ -288,6 +295,15 @@ export const fileSelector = createPrompt<FileSelectorResult, FileSelectorConfig>
 
     useKeypress((key, rl) => {
       const extKey = key as ExtendedKeyEvent;
+
+      // Ctrl+R for dry-run (review before running)
+      if (key.ctrl && key.name === "r") {
+        if (currentFile) {
+          done({ action: "dry-run", path: currentFile.path });
+        }
+        return;
+      }
+
       if (isEnterKey(key)) {
         if (currentFile) {
           done({ action: "run", path: currentFile.path });
@@ -472,7 +488,7 @@ export const fileSelector = createPrompt<FileSelectorResult, FileSelectorConfig>
     const k = (t: string) => `\x1b[7m ${t} \x1b[27m`;
     outputLines.push("");
     outputLines.push(
-      `${k("↑↓")} Nav  ${k("Enter")} Run  ${k("Tab")} Edit  ${k("^U/D")} Scroll  ${k("Esc")} Clear`
+      `${k("↑↓")} Nav  ${k("Enter")} Run  ${k("^R")} Dry  ${k("Tab")} Edit  ${k("Esc")} Clear`
     );
 
     return outputLines.join("\n");
@@ -531,7 +547,7 @@ function openInEditor(filePath: string): boolean {
  */
 export async function showFileSelectorWithPreview(
   files: AgentFile[]
-): Promise<string | undefined> {
+): Promise<FileSelectorSelection | undefined> {
   if (files.length === 0) {
     return undefined;
   }
@@ -555,8 +571,9 @@ export async function showFileSelectorWithPreview(
         continue;
       }
 
-      // action === "run"
-      return result.path;
+      // action === "run" or "dry-run" - clear screen before returning
+      process.stdout.write("\x1b[2J\x1b[H");
+      return { path: result.path, dryRun: result.action === "dry-run" };
     } catch {
       // User cancelled (Ctrl+C) or other error
       return undefined;

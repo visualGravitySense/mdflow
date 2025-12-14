@@ -192,10 +192,16 @@ export class CliRunner {
     if (subcommand === "help") cliArgs.help = true;
 
     let filePath = cliArgs.filePath;
+    let passthroughArgs = cliArgs.passthroughArgs;
     if (!filePath || subcommand === "help") {
       const result = await handleMaCommands(cliArgs);
-      if (result.selectedFile) filePath = result.selectedFile;
-      else if (!result.handled) {
+      if (result.selectedFile) {
+        filePath = result.selectedFile;
+        // If dry-run was selected via Shift+Enter, inject the flag
+        if (result.dryRun) {
+          passthroughArgs = ["--_dry-run", ...passthroughArgs];
+        }
+      } else if (!result.handled) {
         this.writeStderr("Usage: md <file.md> [flags for command]");
         this.writeStderr("       md <command> [options]");
         this.writeStderr("\nCommands: create, setup, logs, help");
@@ -204,7 +210,7 @@ export class CliRunner {
       }
     }
 
-    return this.runAgent(filePath, cliArgs.passthroughArgs, setLogPath);
+    return this.runAgent(filePath, passthroughArgs, setLogPath);
   }
 
   private async runAgent(

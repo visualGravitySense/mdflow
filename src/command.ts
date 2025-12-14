@@ -6,7 +6,7 @@
 import type { AgentFrontmatter } from "./types";
 import { basename } from "path";
 import { teeToStdoutAndCollect, teeToStderrAndCollect } from "./stream";
-import { stopSpinner } from "./spinner";
+import { stopSpinner, isSpinnerRunning } from "./spinner";
 
 /**
  * Module-level reference to the current child process
@@ -318,11 +318,10 @@ export async function runCommand(ctx: RunContext): Promise<RunResult> {
     : undefined;
 
   // Determine stdout/stderr pipe config based on mode
-  const shouldPipeStdout = mode === "capture" || mode === "tee";
+  // When spinner is running, we need to pipe stdout to detect first output
+  const spinnerActive = isSpinnerRunning();
+  const shouldPipeStdout = mode === "capture" || mode === "tee" || spinnerActive;
   const shouldPipeStderr = (mode === "capture" || mode === "tee") && captureStderr;
-
-  // Stop any loading spinner before handing control to the subprocess
-  stopSpinner();
 
   const proc = Bun.spawn([command, ...finalArgs], {
     stdout: shouldPipeStdout ? "pipe" : "inherit",
@@ -372,10 +371,29 @@ export async function runCommand(ctx: RunContext): Promise<RunResult> {
       // Print stderr to console
       console.error(stderr);
     }
+  } else if (spinnerActive && proc.stdout) {
+    // Spinner mode: stream to stdout, stop spinner on first output
+    const reader = proc.stdout.getReader();
+    let firstChunk = true;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      if (firstChunk) {
+        stopSpinner();
+        firstChunk = false;
+      }
+
+      process.stdout.write(value);
+    }
   }
-  // mode === "none": stdout/stderr are inherited, nothing to capture
+  // mode === "none" without spinner: stdout/stderr are inherited, nothing to capture
 
   const exitCode = await proc.exited;
+
+  // Ensure spinner is stopped (in case process exited without output)
+  stopSpinner();
 
   // Clear reference after process exits
   currentChildProcess = null;

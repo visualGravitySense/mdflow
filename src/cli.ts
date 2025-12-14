@@ -3,7 +3,7 @@ import { basename, join } from "path";
 import { realpathSync } from "fs";
 import { homedir } from "os";
 import { EarlyExitRequest, UserCancelledError } from "./errors";
-import { showFileSelectorWithPreview } from "./file-selector";
+import { showFileSelectorWithPreview, type FileSelectorSelection } from "./file-selector";
 import { startSpinner } from "./spinner";
 
 export interface CliArgs {
@@ -17,6 +17,8 @@ export interface CliArgs {
 export interface HandleMaCommandsResult {
   handled: boolean;
   selectedFile?: string;
+  /** Whether the user selected dry-run mode (Shift+Enter) */
+  dryRun?: boolean;
 }
 
 /** Agent file discovered by the file finder */
@@ -236,9 +238,9 @@ export function getUserAgentsDir(): string {
 }
 
 /**
- * Show interactive file picker with preview and return selected file path
+ * Show interactive file picker with preview and return selection (path + dryRun flag)
  */
-export async function showInteractiveSelector(files: AgentFile[]): Promise<string | undefined> {
+export async function showInteractiveSelector(files: AgentFile[]): Promise<FileSelectorSelection | undefined> {
   return showFileSelectorWithPreview(files);
 }
 
@@ -257,11 +259,11 @@ export async function handleMaCommands(args: CliArgs): Promise<HandleMaCommandsR
     if (process.stdin.isTTY) {
       const mdFiles = await findAgentFiles();
       if (mdFiles.length > 0) {
-        const selected = await showInteractiveSelector(mdFiles);
-        if (selected) {
+        const selection = await showInteractiveSelector(mdFiles);
+        if (selection) {
           // Start spinner to show activity while preparing the agent
-          startSpinner(`Starting ${basename(selected)}...`);
-          return { handled: true, selectedFile: selected };
+          startSpinner(`Starting ${basename(selection.path)}...`);
+          return { handled: true, selectedFile: selection.path, dryRun: selection.dryRun };
         }
         // User cancelled - throw error for clean exit
         throw new UserCancelledError("No agent selected");
