@@ -8,7 +8,6 @@ import type { FileSelectorSelection } from "./file-selector";
 
 // Deferred imports for cold start optimization
 let _showFileSelectorWithPreview: typeof import("./file-selector").showFileSelectorWithPreview | null = null;
-let _startSpinner: typeof import("./spinner").startSpinner | null = null;
 let _loadHistory: typeof import("./history").loadHistory | null = null;
 let _getFrecencyScore: typeof import("./history").getFrecencyScore | null = null;
 
@@ -18,14 +17,6 @@ async function getFileSelector() {
     _showFileSelectorWithPreview = mod.showFileSelectorWithPreview;
   }
   return _showFileSelectorWithPreview;
-}
-
-async function getSpinner() {
-  if (!_startSpinner) {
-    const mod = await import("./spinner");
-    _startSpinner = mod.startSpinner;
-  }
-  return _startSpinner;
 }
 
 async function getHistory() {
@@ -329,9 +320,7 @@ export async function handleMaCommands(args: CliArgs): Promise<HandleMaCommandsR
       if (mdFiles.length > 0) {
         const selection = await showInteractiveSelector(mdFiles);
         if (selection) {
-          // Start spinner to show activity while preparing the agent (lazy-loaded)
-          const startSpinner = await getSpinner();
-          startSpinner(`Starting ${basename(selection.path)}...`);
+          // Spinner will be started in cli-runner.ts with command preview
           return { handled: true, selectedFile: selection.path, dryRun: selection.dryRun };
         }
         // User cancelled - throw error for clean exit

@@ -15,6 +15,7 @@ import {
   resolveCommand, buildArgs, runCommand, extractPositionalMappings,
   extractEnvVars, killCurrentChildProcess, hasInteractiveMarker,
 } from "./command";
+import { startSpinner } from "./spinner";
 import { getProcessManager } from "./process-manager";
 import {
   expandImports, hasImports,
@@ -323,6 +324,10 @@ export class CliRunner {
 
     getCommandLogger().info({ command, argsCount: finalRunArgs.length, promptLength: finalBody.length }, "Executing command");
 
+    // Start spinner with command preview (will be stopped when first output arrives)
+    const preview = formatCommandPreview(command, finalRunArgs);
+    startSpinner(preview);
+
     const runResult = await runCommand({
       command, args: finalRunArgs, positionals: [finalBody], positionalMappings, captureOutput: false, env: extractEnvVars(frontmatter),
     });
@@ -626,6 +631,53 @@ export class CliRunner {
       getCommandLogger().debug({ domain }, "Domain already trusted");
     }
   }
+}
+
+/**
+ * Format a command preview for the spinner message
+ * Shows command + subcommands + key flags in a concise format
+ */
+function formatCommandPreview(command: string, args: string[], maxLength = 60): string {
+  // Build a representation: command subcommand flag1 flag2 ...
+  const parts = [command];
+
+  // First, add any leading non-flag args (subcommands like "exec")
+  let i = 0;
+  while (i < args.length) {
+    const arg = args[i];
+    if (!arg || arg.startsWith("-")) break;
+    // Include subcommands (short non-flag args)
+    if (arg.length <= 20) {
+      parts.push(arg);
+    }
+    i++;
+  }
+
+  // Then add flags and their short values
+  for (; i < args.length; i++) {
+    const arg = args[i];
+    if (!arg) continue;
+
+    if (arg.startsWith("-")) {
+      // It's a flag - add it
+      parts.push(arg);
+      // Check if next arg is a short value (not another flag)
+      const nextArg = args[i + 1];
+      if (nextArg && !nextArg.startsWith("-") && nextArg.length <= 20) {
+        parts.push(nextArg);
+        i++;
+      }
+    }
+  }
+
+  let preview = parts.join(" ");
+
+  // Truncate if too long
+  if (preview.length > maxLength) {
+    preview = preview.slice(0, maxLength - 3) + "...";
+  }
+
+  return preview;
 }
 
 /** Create a CliRunner with the given environment */
