@@ -43,7 +43,7 @@ export async function loadHistory(): Promise<HistoryData> {
     historyData = {};
   }
 
-  return historyData;
+  return historyData!;
 }
 
 /**

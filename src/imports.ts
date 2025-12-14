@@ -13,13 +13,14 @@ import { parseImports as parseImportsSafe, hasImportsInContent } from "./imports
 import type { ImportAction, ExecutableCodeFenceAction } from "./imports-types";
 
 // Lazy-load ignore package (only needed for glob imports)
-let _ignore: typeof import("ignore").default | null = null;
-async function getIgnore() {
-  if (!_ignore) {
+type IgnoreFactory = typeof import("ignore");
+let _ignoreFactory: IgnoreFactory | null = null;
+async function getIgnore(): Promise<IgnoreFactory> {
+  if (!_ignoreFactory) {
     const mod = await import("ignore");
-    _ignore = mod.default;
+    _ignoreFactory = mod.default ?? mod;
   }
-  return _ignore;
+  return _ignoreFactory;
 }
 
 /**

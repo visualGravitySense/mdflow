@@ -145,8 +145,8 @@ export async function fetchRemote(
         const cachedContent = await readFile(contentPath, "utf-8");
 
         // Update cache metadata to refresh TTL
-        const newEtag = response.headers.get("etag") || cachedMeta.etag;
-        const newLastModified = response.headers.get("last-modified") || cachedMeta.lastModified;
+        const newEtag = response.headers.get("etag") || cachedMeta?.etag;
+        const newLastModified = response.headers.get("last-modified") || cachedMeta?.lastModified;
 
         await touchCacheEntry(rawUrl, {
           ttlMs: cacheTtlMs,

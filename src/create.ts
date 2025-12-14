@@ -8,6 +8,7 @@ import { existsSync, mkdirSync } from "fs";
 import { join, resolve } from "path";
 import yaml from "js-yaml";
 import { getProjectAgentsDir, getUserAgentsDir } from "./cli";
+import { openInEditor } from "./file-selector";
 
 interface CreateOptions {
   name?: string;
@@ -238,4 +239,7 @@ Examples:
   }
 
   console.log(`\nRun it with:\n  ${runCmd}\n`);
+
+  // Open in editor
+  openInEditor(targetPath);
 }

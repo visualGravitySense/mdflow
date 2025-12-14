@@ -223,13 +223,13 @@ describe("integration: full pipeline simulation", () => {
     expect(finalBody).toContain("Deploy test-agent to production");
 
     // Step 5: Build command args
-    const args = buildArgs(frontmatter, new Set(templateVars));
+    const args = buildArgs(frontmatter as AgentFrontmatter, new Set(templateVars));
     expect(args).toContain("--model");
     expect(args).toContain("--print");
     expect(args).not.toContain("--_name");
 
     // Step 6: Extract env vars
-    const envVars = extractEnvVars(frontmatter);
+    const envVars = extractEnvVars(frontmatter as AgentFrontmatter);
     expect(envVars).toEqual({ DEBUG: "true" });
   });
 });

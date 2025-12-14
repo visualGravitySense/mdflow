@@ -519,7 +519,7 @@ export const fileSelector = createPrompt<FileSelectorResult, FileSelectorConfig>
  * Open a file in the user's $EDITOR
  * Returns true if successful, false if editor not configured or failed
  */
-function openInEditor(filePath: string): boolean {
+export function openInEditor(filePath: string): boolean {
   const editor = process.env.EDITOR || process.env.VISUAL;
 
   if (!editor) {
