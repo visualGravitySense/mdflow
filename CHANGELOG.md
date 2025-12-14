@@ -1,3 +1,10 @@
+# [2.33.0](https://github.com/johnlindquist/mdflow/compare/v2.32.0...v2.33.0) (2025-12-14)
+
+
+### Features
+
+* show command preview in spinner instead of filename ([487d5ad](https://github.com/johnlindquist/mdflow/commit/487d5ad5c765f4e2ff3c27bf08bca390b1ee10c6))
+
 # [2.32.0](https://github.com/johnlindquist/mdflow/compare/v2.31.1...v2.32.0) (2025-12-14)
 
 
