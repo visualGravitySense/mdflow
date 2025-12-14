@@ -1,5 +1,5 @@
 import { expect, test, describe } from "bun:test";
-import { validateFrontmatter, safeParseFrontmatter } from "./schema";
+import { validateFrontmatter, safeParseFrontmatter, validateConfig, safeParseConfig } from "./schema";
 
 describe("validateFrontmatter", () => {
   test("validates empty frontmatter", () => {
@@ -73,5 +73,69 @@ describe("safeParseFrontmatter", () => {
     const result = safeParseFrontmatter({ _inputs: "invalid" });
     expect(result.success).toBe(false);
     expect(result.errors).toBeDefined();
+  });
+});
+
+describe("validateConfig", () => {
+  test("validates empty config", () => {
+    const result = validateConfig({});
+    expect(result).toEqual({});
+  });
+
+  test("validates config with commands", () => {
+    const result = validateConfig({
+      commands: {
+        claude: { model: "opus", print: true },
+        gemini: { model: "pro" }
+      }
+    });
+    expect(result.commands?.claude?.model).toBe("opus");
+    expect(result.commands?.claude?.print).toBe(true);
+    expect(result.commands?.gemini?.model).toBe("pro");
+  });
+
+  test("validates config with positional mappings", () => {
+    const result = validateConfig({
+      commands: {
+        copilot: { $1: "prompt" }
+      }
+    });
+    expect(result.commands?.copilot?.["$1"]).toBe("prompt");
+  });
+
+  test("validates config with array values", () => {
+    const result = validateConfig({
+      commands: {
+        claude: { "add-dir": ["./src", "./tests"] }
+      }
+    });
+    expect(result.commands?.claude?.["add-dir"]).toEqual(["./src", "./tests"]);
+  });
+
+  test("throws on invalid config with unknown top-level keys", () => {
+    expect(() => validateConfig({
+      commands: {},
+      invalidKey: "value"
+    })).toThrow("Invalid config.yaml");
+  });
+});
+
+describe("safeParseConfig", () => {
+  test("returns success with valid config", () => {
+    const result = safeParseConfig({
+      commands: { claude: { model: "opus" } }
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.commands?.claude?.model).toBe("opus");
+  });
+
+  test("returns errors for invalid config", () => {
+    const result = safeParseConfig({
+      commands: {},
+      unknownField: true
+    });
+    expect(result.success).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(result.errors!.length).toBeGreaterThan(0);
   });
 });

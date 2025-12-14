@@ -215,6 +215,11 @@ export class CliRunner {
       }
       return { exitCode: 0 };
     }
+    if (subcommand === "explain") {
+      const { runExplain } = await import("./explain");
+      await runExplain(cliArgs.passthroughArgs);
+      return { exitCode: 0 };
+    }
     if (subcommand === "help") cliArgs.help = true;
 
     let filePath = cliArgs.filePath;

@@ -5,6 +5,44 @@
  *
  * This module uses pure functions without module-level state.
  * Configuration is explicitly passed through the call chain via RunContext.
+ *
+ * ============================================================================
+ * CONFIGURATION PRECEDENCE (later entries override earlier ones)
+ * ============================================================================
+ *
+ * 1. Built-in defaults
+ *    - Hardcoded defaults from tool adapters (e.g., claude defaults to --print)
+ *    - Defined in src/adapters/*.ts via getDefaults()
+ *
+ * 2. Global config (~/.mdflow/config.yaml)
+ *    - User-wide defaults for all projects
+ *    - Sets default flags per command
+ *
+ * 3. Project config (git root or CWD)
+ *    - mdflow.config.yaml, .mdflow.yaml, or .mdflow.json
+ *    - Git root config loads first, then CWD config overrides
+ *
+ * 4. Agent frontmatter
+ *    - YAML block at the top of the .md file
+ *    - Specific to this agent
+ *
+ * 5. CLI flags (passthrough args)
+ *    - Flags passed after the agent file: `md task.md --model opus`
+ *    - Highest precedence for explicit flags
+ *
+ * 6. Interactive prompts (template vars)
+ *    - When a template variable ({{ _name }}) is missing and stdin is TTY
+ *    - User is prompted for the value at runtime
+ *
+ * Example precedence resolution:
+ *   Built-in: { print: true }
+ *   + Global config: { model: "sonnet" }
+ *   + Project config: { model: "opus" }
+ *   + Frontmatter: { verbose: true }
+ *   + CLI: --model haiku
+ *   = Final: { print: true, model: "haiku", verbose: true }
+ *
+ * ============================================================================
  */
 
 import { homedir } from "os";
@@ -13,6 +51,7 @@ import { existsSync, statSync } from "fs";
 import yaml from "js-yaml";
 import type { AgentFrontmatter, GlobalConfig, CommandDefaults, RunContext } from "./types";
 import { getAdapter, buildBuiltinDefaults } from "./adapters";
+import { safeParseConfig } from "./schema";
 
 // Re-export types for convenience
 export type { GlobalConfig, CommandDefaults } from "./types";
@@ -127,9 +166,14 @@ function findProjectConfigFile(dir: string): string | null {
 }
 
 /**
- * Load config from a file (yaml or json)
+ * Load and validate config from a file (yaml or json)
+ * Validates against the globalConfigSchema to ensure type safety
+ *
+ * @param filePath - Path to the config file
+ * @param throwOnInvalid - If true, throws on validation errors; if false, logs warning and returns null
+ * @returns Validated config or null if file doesn't exist or is invalid
  */
-async function loadConfigFile(filePath: string): Promise<GlobalConfig | null> {
+async function loadConfigFile(filePath: string, throwOnInvalid: boolean = false): Promise<GlobalConfig | null> {
   try {
     const file = Bun.file(filePath);
     if (!await file.exists()) {
@@ -137,12 +181,28 @@ async function loadConfigFile(filePath: string): Promise<GlobalConfig | null> {
     }
     const content = await file.text();
 
+    let parsed: unknown;
     if (filePath.endsWith(".json")) {
-      return JSON.parse(content) as GlobalConfig;
+      parsed = JSON.parse(content);
     } else {
-      return yaml.load(content) as GlobalConfig;
+      parsed = yaml.load(content);
     }
-  } catch {
+
+    // Validate with Zod schema
+    const validation = safeParseConfig(parsed);
+    if (!validation.success) {
+      const errorMsg = `Invalid config file ${filePath}:\n  ${validation.errors?.join("\n  ")}`;
+      if (throwOnInvalid) {
+        throw new Error(errorMsg);
+      }
+      console.warn(`Warning: ${errorMsg}`);
+      return null;
+    }
+
+    return validation.data as GlobalConfig;
+  } catch (err) {
+    if (throwOnInvalid) throw err;
+    // Silently fail on parse errors (file might be malformed)
     return null;
   }
 }

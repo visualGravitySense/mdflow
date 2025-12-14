@@ -1,5 +1,5 @@
 /**
- * Zod schemas for frontmatter validation
+ * Zod schemas for frontmatter and config validation
  * Minimal validation - most keys pass through to the command
  */
 
@@ -7,6 +7,83 @@ import { z } from "zod";
 
 /** Coerce any primitive value to string (for env vars where YAML may parse as bool/number) */
 const stringCoerce = z.union([z.string(), z.number(), z.boolean()]).transform(v => String(v));
+
+// ============================================================================
+// Config Schema (for ~/.mdflow/config.yaml and project configs)
+// ============================================================================
+
+/**
+ * Command defaults schema - allows any key that becomes a CLI flag
+ * Special keys:
+ * - $1, $2, etc.: Positional argument mappings
+ * - context_window: Token limit override (number)
+ * - All other keys: CLI flag values (string, number, boolean, array)
+ */
+const commandDefaultsSchema = z.record(
+  z.string(),
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.array(z.union([z.string(), z.number(), z.boolean()])),
+  ])
+).describe("Command-specific default flags");
+
+/**
+ * Global config schema for config.yaml files
+ * Structure:
+ * ```yaml
+ * commands:
+ *   claude:
+ *     model: sonnet
+ *     print: true
+ *   gemini:
+ *     model: pro
+ * ```
+ */
+export const globalConfigSchema = z.object({
+  commands: z.record(z.string(), commandDefaultsSchema).optional(),
+}).strict().describe("Global mdflow configuration");
+
+/** Type inferred from config schema */
+export type GlobalConfigSchema = z.infer<typeof globalConfigSchema>;
+
+/**
+ * Validate config.yaml content
+ * @throws Error with detailed message if validation fails
+ */
+export function validateConfig(data: unknown): GlobalConfigSchema {
+  const result = globalConfigSchema.safeParse(data);
+
+  if (!result.success) {
+    const errors = formatZodIssues(result.error.issues);
+    throw new Error(`Invalid config.yaml:\n  ${errors.join("\n  ")}`);
+  }
+
+  return result.data;
+}
+
+/**
+ * Validate config without throwing - returns result object
+ */
+export function safeParseConfig(data: unknown): {
+  success: boolean;
+  data?: GlobalConfigSchema;
+  errors?: string[];
+} {
+  const result = globalConfigSchema.safeParse(data);
+
+  if (result.success) {
+    return { success: true, data: result.data };
+  }
+
+  const errors = formatZodIssues(result.error.issues);
+  return { success: false, errors };
+}
+
+// ============================================================================
+// Frontmatter Schema (for agent .md files)
+// ============================================================================
 
 /** Main frontmatter schema - minimal, passthrough everything else */
 export const frontmatterSchema = z.object({

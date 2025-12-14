@@ -107,6 +107,7 @@ Usage: md <file.md> [flags for the command]
 
 Commands:
   md create [name] [flags]      Create a new agent file
+  md explain <agent.md>         Show resolved config without executing
   md setup                      Configure shell (PATH, aliases)
   md logs                       Show agent log directory
   md help                       Show this help
